@@ -33,7 +33,7 @@ async function readReports() {
 }
 
 async function writeReports(reports) {
-  await mkdir(dataDir, { recursive: true });
+  await mkdir(dirname(dbPath), { recursive: true });
   await writeFile(dbPath, JSON.stringify(reports, null, 2));
 }
 
