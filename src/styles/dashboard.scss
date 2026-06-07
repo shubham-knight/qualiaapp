@@ -489,6 +489,9 @@
 }
 
 .icon-only-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 36px;
   min-width: 36px;
   padding: 0;
