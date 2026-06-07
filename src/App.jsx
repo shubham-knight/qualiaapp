@@ -482,7 +482,9 @@ function FoodDashboard({ report }) {
         <div className="donut-card">
           <h2>Revenue Share by Channel</h2>
 
-          <RevenueChart type="doughnut" data={report.channelData} />
+          <div className="donut-chart-wrap">
+            <RevenueChart type="doughnut" data={report.channelData} />
+          </div>
 
           <div className="chart-legend">
             {report.channelRows
@@ -771,6 +773,7 @@ function App() {
   const activePeriodLabel = activeReport?.periodLabel || "No report selected";
   const isAggregateFoodView =
     isFood && activeSelection.startsWith("last-") && Boolean(foodReport);
+  const pageViewKey = isReports ? "reports" : page;
 
   return (
     <div className={`app ${isSidebarOpen ? "sidebar-open" : ""}`}>
@@ -800,109 +803,111 @@ function App() {
       />
 
       <main className="main">
-        {isReports ? (
-          <ReportsPage
-            uploads={uploads}
-            uploadStatus={uploadStatus}
-            databaseStatus={databaseStatus}
-            onUpload={handleUpload}
-            onDelete={handleDeleteReport}
-          />
-        ) : (
-          <>
-            <div className="page-header">
-              <div>
-                <h1 className="page-title">
-                  {isFood ? "Food & Beverage" : "Spa · Banquet · Other"}
-                </h1>
+        <div className="page-transition" key={pageViewKey}>
+          {isReports ? (
+            <ReportsPage
+              uploads={uploads}
+              uploadStatus={uploadStatus}
+              databaseStatus={databaseStatus}
+              onUpload={handleUpload}
+              onDelete={handleDeleteReport}
+            />
+          ) : (
+            <>
+              <div className="page-header">
+                <div>
+                  <h1 className="page-title">
+                    {isFood ? "Food & Beverage" : "Spa · Banquet · Other"}
+                  </h1>
 
-                <p className="page-subtitle">
-                  {isFood
-                    ? "Upload the F&B report to generate channel revenue"
-                    : "Upload the ancillary report to generate department revenue"}
-                </p>
-              </div>
+                  <p className="page-subtitle">
+                    {isFood
+                      ? "Upload the F&B report to generate channel revenue"
+                      : "Upload the ancillary report to generate department revenue"}
+                  </p>
+                </div>
 
-              <div className="header-actions">
-                <select
-                  className="month-select"
-                  disabled={!activeUploads.length}
-                  value={activeSelection}
-                  onChange={(event) =>
-                    setSelections((current) => ({
-                      ...current,
-                      [activeKey]: event.target.value,
-                    }))
-                  }
-                >
-                  {!activeUploads.length ? (
-                    <option>No reports uploaded</option>
-                  ) : null}
-
-                  {sortReports(activeUploads).map((report) => (
-                    <option key={report.monthKey} value={report.monthKey}>
-                      {report.monthLabel}
-                    </option>
-                  ))}
-
-                  {activeUploads.length ? (
-                    <>
-                      <option value="last-3">Last 3 months</option>
-                      <option value="last-6">Last 6 months</option>
-                      <option value="last-12">Last 1 year</option>
-                    </>
-                  ) : null}
-                </select>
-
-                {isAggregateFoodView ? (
+                <div className="header-actions">
                   <select
                     className="month-select"
-                    value={aggregateIntervalDays}
+                    disabled={!activeUploads.length}
+                    value={activeSelection}
                     onChange={(event) =>
-                      setAggregateIntervalDays(Number(event.target.value))
+                      setSelections((current) => ({
+                        ...current,
+                        [activeKey]: event.target.value,
+                      }))
                     }
                   >
-                    <option value={10}>10-day intervals</option>
-                    <option value={15}>15-day intervals</option>
-                    <option value={31}>Monthly intervals</option>
+                    {!activeUploads.length ? (
+                      <option>No reports uploaded</option>
+                    ) : null}
+
+                    {sortReports(activeUploads).map((report) => (
+                      <option key={report.monthKey} value={report.monthKey}>
+                        {report.monthLabel}
+                      </option>
+                    ))}
+
+                    {activeUploads.length ? (
+                      <>
+                        <option value="last-3">Last 3 months</option>
+                        <option value="last-6">Last 6 months</option>
+                        <option value="last-12">Last 1 year</option>
+                      </>
+                    ) : null}
                   </select>
-                ) : null}
 
-                <button className="date-btn">{activePeriodLabel}</button>
+                  {isAggregateFoodView ? (
+                    <select
+                      className="month-select"
+                      value={aggregateIntervalDays}
+                      onChange={(event) =>
+                        setAggregateIntervalDays(Number(event.target.value))
+                      }
+                    >
+                      <option value={10}>10-day intervals</option>
+                      <option value={15}>15-day intervals</option>
+                      <option value={31}>Monthly intervals</option>
+                    </select>
+                  ) : null}
 
-                <button
-                  className="export-btn"
-                  disabled={!canExport}
-                  onClick={handleExport}
-                >
-                  Export PDF
-                </button>
+                  <button className="date-btn">{activePeriodLabel}</button>
+
+                  <button
+                    className="export-btn"
+                    disabled={!canExport}
+                    onClick={handleExport}
+                  >
+                    Export PDF
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {isFood && foodReport ? (
-              <FoodDashboard report={foodReport} />
-            ) : null}
+              {isFood && foodReport ? (
+                <FoodDashboard report={foodReport} />
+              ) : null}
 
-            {!isFood && ancillaryReport ? (
-              <AncillaryDashboard report={ancillaryReport} />
-            ) : null}
+              {!isFood && ancillaryReport ? (
+                <AncillaryDashboard report={ancillaryReport} />
+              ) : null}
 
-            {isFood && !foodReport ? (
-              <EmptyReportState
-                title="Food & Beverage"
-                onOpenReports={() => setPage("reports")}
-              />
-            ) : null}
+              {isFood && !foodReport ? (
+                <EmptyReportState
+                  title="Food & Beverage"
+                  onOpenReports={() => setPage("reports")}
+                />
+              ) : null}
 
-            {!isFood && !ancillaryReport ? (
-              <EmptyReportState
-                title="Spa · Banquet · Other"
-                onOpenReports={() => setPage("reports")}
-              />
-            ) : null}
-          </>
-        )}
+              {!isFood && !ancillaryReport ? (
+                <EmptyReportState
+                  title="Spa · Banquet · Other"
+                  onOpenReports={() => setPage("reports")}
+                />
+              ) : null}
+            </>
+          )}
+        </div>
       </main>
     </div>
   );
