@@ -805,7 +805,7 @@ function AncillaryDashboard({ report }) {
 
 function App() {
   const [page, setPage] = useState("food");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [uploads, setUploads] = useState({
     food: [],
     spa: [],
@@ -1024,30 +1024,13 @@ function App() {
   }, [isFood, foodIntervalOptions, aggregateIntervalDays]);
 
   return (
-    <div className={`app ${isSidebarOpen ? "sidebar-open" : ""}`}>
-      <button
-        className="menu-toggle"
-        type="button"
-        aria-label="Open navigation"
-        aria-expanded={isSidebarOpen}
-        onClick={() => setIsSidebarOpen((open) => !open)}
-      >
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-
-      <button
-        className="sidebar-backdrop"
-        type="button"
-        aria-label="Close navigation"
-        onClick={() => setIsSidebarOpen(false)}
-      ></button>
-
+    <div className={`app ${isMobileNavOpen ? "mobile-nav-open" : ""}`}>
       <Sidebar
+        mobileNavOpen={isMobileNavOpen}
+        onToggleMobileNav={() => setIsMobileNavOpen((open) => !open)}
         selectedPage={page}
         onChangePage={setPage}
-        onNavigate={() => setIsSidebarOpen(false)}
+        onNavigate={() => setIsMobileNavOpen(false)}
       />
 
       <main className="main">
