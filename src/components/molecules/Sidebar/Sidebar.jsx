@@ -47,14 +47,8 @@ export default function Sidebar({
         <div className="sidebar-section">Overview</div>
 
         <div
-          className={`sidebar-item ${
-            selectedPage === "dashboard"
-              ? "active"
-              : ""
-          }`}
-          onClick={() =>
-            changePage("dashboard")
-          }
+          className={`sidebar-item ${selectedPage === "dashboard" ? "active" : ""}`}
+          onClick={() => changePage("dashboard")}
         >
           <LayoutDashboard size={18} strokeWidth={2.7} />
           <span>Dashboard</span>
@@ -63,92 +57,52 @@ export default function Sidebar({
         <div className="sidebar-section">Departments</div>
 
         <div
-          className={`sidebar-item ${
-            selectedPage === "rooms"
-              ? "active"
-              : ""
-          }`}
-          onClick={() =>
-            changePage("rooms")
-          }
+          className={`sidebar-item ${selectedPage === "rooms" ? "active" : ""}`}
+          onClick={() => changePage("rooms")}
         >
           <BedDouble size={20} strokeWidth={2.5} />
           <span>Rooms & Occupancy</span>
         </div>
 
         <div
-          className={`sidebar-item ${
-            selectedPage === "food"
-              ? "active"
-              : ""
-          }`}
-          onClick={() =>
-            changePage("food")
-          }
+          className={`sidebar-item ${selectedPage === "food" ? "active" : ""}`}
+          onClick={() => changePage("food")}
         >
           <Utensils size={20} strokeWidth={2.5} />
           <span>Food & Beverage</span>
-          {selectedPage === "food" ? (
-            <span className="live-badge">live</span>
-          ) : null}
+          {selectedPage === "food" ? <span className="live-badge">live</span> : null}
         </div>
 
         <div
-          className={`sidebar-item ${
-            selectedPage === "regions"
-              ? "active"
-              : ""
-          }`}
-          onClick={() =>
-            changePage("regions")
-          }
+          className={`sidebar-item ${selectedPage === "regions" ? "active" : ""}`}
+          onClick={() => changePage("regions")}
         >
           <MapPin size={20} strokeWidth={2.5} />
           <span>Regions & Sources</span>
         </div>
 
         <div
-          className={`sidebar-item ${
-            selectedPage === "spa"
-              ? "active"
-              : ""
-          }`}
-          onClick={() =>
-            changePage("spa")
-          }
+          className={`sidebar-item ${selectedPage === "spa" ? "active" : ""}`}
+          onClick={() => changePage("spa")}
         >
           <Sparkles size={20} strokeWidth={2.5} />
           <span>Spa · Banquet · Other</span>
-          {selectedPage === "spa" ? (
-            <span className="live-badge">live</span>
-          ) : null}
+          {selectedPage === "spa" ? <span className="live-badge">live</span> : null}
         </div>
 
         <div className="sidebar-section">Manage</div>
 
         <div
-          className={`sidebar-item ${
-            selectedPage === "reports"
-              ? "active"
-              : ""
-          }`}
-          onClick={() =>
-            changePage("reports")
-          }
+          className={`sidebar-item ${selectedPage === "reports" ? "active" : ""}`}
+          onClick={() => changePage("reports")}
         >
           <Hexagon size={19} strokeWidth={2.5} />
           <span>Reports</span>
         </div>
 
         <div
-          className={`sidebar-item ${
-            selectedPage === "settings"
-              ? "active"
-              : ""
-          }`}
-          onClick={() =>
-            changePage("settings")
-          }
+          className={`sidebar-item ${selectedPage === "settings" ? "active" : ""}`}
+          onClick={() => changePage("settings")}
         >
           <Settings size={19} strokeWidth={2.5} />
           <span>Settings</span>

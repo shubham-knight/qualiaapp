@@ -1,0 +1,41 @@
+.overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr);
+  gap: 18px;
+  margin-top: 22px;
+  align-items: stretch;
+}
+
+.overview-grid .donut-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.overview-full-table {
+  margin-top: 18px;
+  overflow: hidden;
+}
+
+.overview-best-days-table {
+  min-width: 0;
+}
+
+.overview-best-days-table th:last-child,
+.overview-best-days-table td:last-child {
+  text-align: right;
+}
+
+.overview-best-days-table td:nth-child(2),
+.overview-best-days-table td:nth-child(3) {
+  color: #5f594f;
+}
+
+.overview-legend .dot {
+  margin-right: 8px;
+}
+
+.overview-legend span:nth-child(1) .dot { background: #1f3d2f; }
+.overview-legend span:nth-child(2) .dot { background: #c2a14d; }
+.overview-legend span:nth-child(3) .dot { background: #d98b4a; }
+.overview-legend span:nth-child(4) .dot { background: #6b7b9c; }
+.overview-legend span:nth-child(5) .dot { background: #8aa893; }

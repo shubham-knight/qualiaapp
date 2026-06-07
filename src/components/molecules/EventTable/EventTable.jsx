@@ -1,9 +1,7 @@
 export default function EventTable({ events }) {
   return (
     <>
-      <h2 className="card-title">
-        Banquet Events — May
-      </h2>
+      <h2 className="card-title">Banquet Events — May</h2>
 
       <table className="events-table">
         <thead>
@@ -19,9 +17,7 @@ export default function EventTable({ events }) {
             <tr key={event.event}>
               <td>{event.event}</td>
               <td>{event.pax}</td>
-              <td className="revenue">
-                {event.revenue}
-              </td>
+              <td className="revenue">{event.revenue}</td>
             </tr>
           ))}
         </tbody>

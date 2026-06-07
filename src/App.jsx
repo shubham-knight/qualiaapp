@@ -1,19 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  CalendarDays,
-  HardHat,
-  Database,
-  FileText,
-  MonitorCog,
-  Printer,
-  ShieldAlert,
-  Trash2,
-} from "lucide-react";
+import { CalendarDays, FileText, Trash2 } from "lucide-react";
 
-import Sidebar from "./components/Sidebar";
-import RevenueCard from "./components/RevenueCard";
-import RevenueChart from "./components/RevenueChart";
-import EventTable from "./components/EventTable";
+import Sidebar from "./components/molecules/Sidebar/Sidebar";
+import EmptyReportState from "./components/molecules/EmptyReportState/EmptyReportState";
+import LoadingReportState from "./components/molecules/LoadingReportState/LoadingReportState";
+import FoodDashboard from "./pages/FoodDashboard/FoodDashboard";
+import AncillaryDashboard from "./pages/AncillaryDashboard/AncillaryDashboard";
+import OverviewDashboard from "./pages/OverviewDashboard/OverviewDashboard";
+import ReportsPage from "./pages/ReportsPage/ReportsPage";
+import SettingsPage from "./pages/SettingsPage/SettingsPage";
+import UnderConstructionPage from "./pages/UnderConstructionPage/UnderConstructionPage";
 
 import "./styles/dashboard.scss";
 
@@ -27,19 +23,6 @@ import {
   fetchStoredReports,
   saveStoredReport,
 } from "./utils/reportApi";
-
-const uploadTargets = [
-  {
-    key: "food",
-    title: "Food & Beverage",
-    description: "Daily revenue by channel, covers, and platform mix.",
-  },
-  {
-    key: "spa",
-    title: "Spa · Banquet · Other",
-    description: "Department revenue, sessions, pax, and banquet events.",
-  },
-];
 
 const APP_PAGE_OPTIONS = [
   {
@@ -693,741 +676,6 @@ const createActiveReport = (reports, selection, type, intervalDays) => {
     : sumAncillaryReports(selected, periodLabel);
 };
 
-function ReportsPage({
-  uploads,
-  uploadStatus,
-  databaseStatus,
-  onUpload,
-  onDelete,
-}) {
-  const [sectionFilter, setSectionFilter] = useState("all");
-  const visibleTargets =
-    sectionFilter === "all"
-      ? uploadTargets
-      : uploadTargets.filter((target) => target.key === sectionFilter);
-  const visibleReports = visibleTargets.flatMap((target) =>
-    sortReports(uploads[target.key] || []).map((report) => ({
-      ...report,
-      sectionTitle: target.title,
-    })),
-  );
-
-  return (
-    <div className="reports-page">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Reports</h1>
-          <p className="page-subtitle">
-            Upload Excel or CSV files to refresh dashboard charts and tables.
-          </p>
-          {databaseStatus ? (
-            <p className="page-subtitle">{databaseStatus}</p>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="upload-grid">
-        {uploadTargets.map((target) => (
-          <section className="upload-card" key={target.key}>
-            <div>
-              <h2>{target.title}</h2>
-              <p>{target.description}</p>
-            </div>
-
-            <label className="upload-button">
-              Upload file
-              <input
-                accept=".xlsx,.xlsm,.xltx,.xltm,.csv"
-                multiple
-                type="file"
-                onChange={(event) => onUpload(target.key, event)}
-              />
-            </label>
-
-            <div className="upload-status">
-              {uploadStatus[target.key] ||
-                (uploads[target.key]?.length
-                  ? `${uploads[target.key].length} monthly report(s) uploaded`
-                  : "No uploaded file yet")}
-            </div>
-          </section>
-        ))}
-      </div>
-
-      <div className="table-card full-width">
-        <div className="card-header">
-          <h2>Uploaded Reports</h2>
-          <div className="table-tools">
-            <select
-              className="month-select"
-              value={sectionFilter}
-              onChange={(event) => setSectionFilter(event.target.value)}
-            >
-              <option value="all">All sections</option>
-              {uploadTargets.map((target) => (
-                <option key={target.key} value={target.key}>
-                  {target.title}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <table className="channel-table reports-table">
-          <thead>
-            <tr>
-              <th>SECTION</th>
-              <th>MONTH</th>
-              <th>ACTION</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {visibleReports.map((report) => (
-              <tr key={report.id || `${report.section}-${report.monthKey}`}>
-                <td>{report.sectionTitle}</td>
-                <td>{report.monthLabel}</td>
-                <td>
-                  <button
-                    className="danger-btn icon-only-btn"
-                    aria-label={`Delete ${report.monthLabel} report`}
-                    title={`Delete ${report.monthLabel} report`}
-                    type="button"
-                    onClick={() => onDelete(report)}
-                  >
-                    <Trash2 size={16} strokeWidth={2.2} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-
-            {!visibleReports.length ? (
-              <tr>
-                <td colSpan="3">No reports uploaded for this filter</td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="table-card full-width schema-card">
-        <h2>Accepted columns</h2>
-
-        <div className="schema-grid">
-          <div>
-            <h3>Food & Beverage</h3>
-            <p>
-              Date/Day, paired channel columns such as Zomato Table + Amount,
-              Swiggy Table + Amount, and a TOTAL row. The final total row drives
-              KPI totals and channel performance.
-            </p>
-          </div>
-
-          <div>
-            <h3>Spa · Banquet · Other</h3>
-            <p>
-              Department/Section/Category, Revenue/Amount/Sales, optional
-              Sessions/Pax/Count, and Event/Booking/Function for banquet rows.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SettingsPage({
-  settings,
-  databaseStatus,
-  reportCounts,
-  onChangeSetting,
-  onClearAllReports,
-  onClearSectionReports,
-}) {
-  return (
-    <div className="settings-page">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Settings</h1>
-          <p className="page-subtitle">
-            Configure dashboard defaults, export behavior, and saved report handling.
-          </p>
-        </div>
-      </div>
-
-      <div className="settings-grid">
-        <section className="settings-panel">
-          <div className="settings-panel-header">
-            <MonitorCog size={18} strokeWidth={2.2} />
-            <h2>Pages & Navigation</h2>
-          </div>
-
-          <div className="settings-field">
-            <label htmlFor="landing-page">Default landing page</label>
-            <select
-              id="landing-page"
-              className="month-select settings-select"
-              value={settings.landingPage}
-              onChange={(event) => onChangeSetting("landingPage", event.target.value)}
-            >
-              {APP_PAGE_OPTIONS.map((pageOption) => (
-                <option key={pageOption.key} value={pageOption.key}>
-                  {pageOption.label}
-                </option>
-              ))}
-            </select>
-            <p>Used on the next app load.</p>
-          </div>
-
-          <div className="settings-page-list">
-            {APP_PAGE_OPTIONS.map((pageOption) => (
-              <div className="settings-page-row" key={pageOption.key}>
-                <div className="settings-page-copy">
-                  <strong>{pageOption.label}</strong>
-                  <span>{pageOption.description}</span>
-                  <small>{pageOption.detail}</small>
-                </div>
-                <span
-                  className={`settings-page-badge ${
-                    pageOption.status === "Live" ? "is-live" : "is-soon"
-                  }`.trim()}
-                >
-                  {pageOption.status}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="settings-panel">
-          <div className="settings-panel-header">
-            <CalendarDays size={18} strokeWidth={2.2} />
-            <h2>Reports</h2>
-          </div>
-
-          <div className="settings-field">
-            <label htmlFor="single-interval">Default single-month interval</label>
-            <select
-              id="single-interval"
-              className="month-select settings-select"
-              value={settings.singleMonthInterval}
-              onChange={(event) =>
-                onChangeSetting("singleMonthInterval", Number(event.target.value))
-              }
-            >
-              {SINGLE_MONTH_INTERVAL_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="settings-field">
-            <label htmlFor="multi-interval">Default multi-month interval</label>
-            <select
-              id="multi-interval"
-              className="month-select settings-select"
-              value={settings.multiMonthInterval}
-              onChange={(event) =>
-                onChangeSetting("multiMonthInterval", Number(event.target.value))
-              }
-            >
-              {MULTI_MONTH_INTERVAL_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="settings-field">
-            <label htmlFor="replace-upload">When uploading an existing month</label>
-            <select
-              id="replace-upload"
-              className="month-select settings-select"
-              value={settings.replaceOnUpload}
-              onChange={(event) =>
-                onChangeSetting("replaceOnUpload", event.target.value)
-              }
-            >
-              <option value="replace">Replace automatically</option>
-              <option value="confirm">Ask before replacing</option>
-            </select>
-            <p>Controls whether same-month uploads overwrite saved reports immediately.</p>
-          </div>
-        </section>
-
-        <section className="settings-panel">
-          <div className="settings-panel-header">
-            <Printer size={18} strokeWidth={2.2} />
-            <h2>Export</h2>
-          </div>
-
-          <label className="settings-toggle">
-            <input
-              checked={settings.includeExecutiveSummary}
-              type="checkbox"
-              onChange={(event) =>
-                onChangeSetting("includeExecutiveSummary", event.target.checked)
-              }
-            />
-            <span>
-              <strong>Executive summary</strong>
-              <small>Include the narrative summary in print/PDF exports.</small>
-            </span>
-          </label>
-
-          <label className="settings-toggle">
-            <input
-              checked={settings.includeSourceLabels}
-              type="checkbox"
-              onChange={(event) =>
-                onChangeSetting("includeSourceLabels", event.target.checked)
-              }
-            />
-            <span>
-              <strong>Source labels</strong>
-              <small>Show uploaded filename and report period on dashboard sections.</small>
-            </span>
-          </label>
-
-          <label className="settings-toggle">
-            <input
-              checked={settings.includeExportTimestamp}
-              type="checkbox"
-              onChange={(event) =>
-                onChangeSetting("includeExportTimestamp", event.target.checked)
-              }
-            />
-            <span>
-              <strong>Export timestamp</strong>
-              <small>Include a print timestamp in exported reports.</small>
-            </span>
-          </label>
-        </section>
-
-        <section className="settings-panel">
-          <div className="settings-panel-header">
-            <Database size={18} strokeWidth={2.2} />
-            <h2>Data & Storage</h2>
-          </div>
-
-          <div className="settings-status">
-            <span className="status-label">Backend</span>
-            <p>{databaseStatus}</p>
-          </div>
-
-          <div className="settings-stats">
-            <div>
-              <strong>{reportCounts.food}</strong>
-              <span>F&B reports</span>
-            </div>
-            <div>
-              <strong>{reportCounts.spa}</strong>
-              <span>Spa reports</span>
-            </div>
-            <div>
-              <strong>{reportCounts.total}</strong>
-              <span>Total saved</span>
-            </div>
-          </div>
-
-          <div className="settings-actions">
-            <button
-              className="danger-btn settings-danger"
-              type="button"
-              onClick={() => onClearSectionReports("food")}
-            >
-              <Trash2 size={16} strokeWidth={2.2} />
-              <span>Clear F&B</span>
-            </button>
-
-            <button
-              className="danger-btn settings-danger"
-              type="button"
-              onClick={() => onClearSectionReports("spa")}
-            >
-              <Trash2 size={16} strokeWidth={2.2} />
-              <span>Clear Spa</span>
-            </button>
-
-            <button
-              className="danger-btn settings-danger wide"
-              type="button"
-              onClick={onClearAllReports}
-            >
-              <ShieldAlert size={16} strokeWidth={2.2} />
-              <span>Clear all saved reports</span>
-            </button>
-          </div>
-        </section>
-      </div>
-    </div>
-  );
-}
-
-function UnderConstructionPage({ title, punchline, detail }) {
-  return (
-    <div className="construction-page">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">{title}</h1>
-          <p className="page-subtitle">{detail}</p>
-        </div>
-      </div>
-
-      <section className="construction-panel">
-        <div className="construction-icon">
-          <HardHat size={26} strokeWidth={2.1} />
-        </div>
-        <h2>{punchline}</h2>
-        <p>
-          This module is being prepared to match the upload-driven dashboard flow.
-          Reports, charts, and performance views will land here next.
-        </p>
-      </section>
-    </div>
-  );
-}
-
-function getCard(report, title) {
-  return report.cards.find((card) => card.title === title);
-}
-
-function PrintSummary({ report, type, includeTimestamp = true }) {
-  const printedAt = new Date().toLocaleString("en-IN", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-
-  if (type === "food") {
-    const revenue = getCard(report, "F&B Revenue")?.value;
-    const covers = getCard(report, "Total Covers")?.value;
-    const avgCheque = getCard(report, "Avg. Cheque")?.value;
-    const bestChannel = getCard(report, "Best Channel");
-    const peakPeriod = getCard(report, "Peak Day") || getCard(report, "Peak Interval");
-
-    return (
-      <section className="print-summary">
-        <h2>Executive Summary</h2>
-        {includeTimestamp ? (
-          <span className="print-summary-meta">Exported {printedAt}</span>
-        ) : null}
-        <p>
-          This Food & Beverage report summarizes uploaded channel revenue,
-          covers, average cheque, channel contribution, and day-wise revenue
-          movement. Total F&B revenue is {revenue}, generated from {covers}{" "}
-          covers at an average cheque of {avgCheque}. The strongest channel is{" "}
-          {bestChannel?.value} with {bestChannel?.growth}, while the peak sales
-          period is {peakPeriod?.value} at {peakPeriod?.growth}.
-        </p>
-      </section>
-    );
-  }
-
-  const topDepartment = report.cards[0];
-
-  return (
-    <section className="print-summary">
-      <h2>Executive Summary</h2>
-      {includeTimestamp ? (
-        <span className="print-summary-meta">Exported {printedAt}</span>
-      ) : null}
-      <p>
-        This ancillary revenue report summarizes department performance and
-        banquet activity from the uploaded file. The highest contributing
-        revenue centre is {topDepartment?.title} at {topDepartment?.value}.
-        The chart below compares revenue across departments, followed by the
-        detailed event table where available.
-      </p>
-    </section>
-  );
-}
-
-function EmptyReportState({ title, onOpenReports }) {
-  return (
-    <div className="empty-report">
-      <h2>{title} report not uploaded</h2>
-      <p>
-        Upload the Excel file from Reports to generate KPI cards, charts, and
-        performance tables.
-      </p>
-      <button className="export-btn" onClick={onOpenReports}>
-        Go to Reports
-      </button>
-    </div>
-  );
-}
-
-function LoadingReportState() {
-  return (
-    <div className="loading-report-page" aria-live="polite" aria-busy="true">
-      <div className="loading-spinner"></div>
-      <div className="loading-copy">
-        <h2>Fetching your reports</h2>
-        <p>Hang on while we load the latest uploaded data and prepare the dashboard.</p>
-      </div>
-    </div>
-  );
-}
-
-function FoodDashboard({
-  report,
-  aggregateIntervalDays = 15,
-  intervalOptions = [],
-  includeExecutiveSummary = true,
-  includeExportTimestamp = true,
-  includeSourceLabels = true,
-  onChangeAggregateInterval,
-}) {
-  return (
-    <>
-      {includeExecutiveSummary ? (
-        <PrintSummary
-          report={report}
-          type="food"
-          includeTimestamp={includeExportTimestamp}
-        />
-      ) : null}
-
-      <div className="metrics five-cols">
-        {report.cards.map((card) => (
-          <RevenueCard key={card.title} {...card} />
-        ))}
-      </div>
-
-      <div className="food-grid">
-        <div className="chart-card">
-          <div className="card-header">
-            <h2>Daily F&B Revenue by Channel</h2>
-
-            {report?.dailyData?.length ? (
-              <div className="card-tools">
-                <select
-                  className="month-select chart-interval-select"
-                  value={aggregateIntervalDays}
-                  onChange={(event) =>
-                    onChangeAggregateInterval?.(Number(event.target.value))
-                  }
-                >
-                  {intervalOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : null}
-          </div>
-
-          <RevenueChart data={report.dailyData} />
-
-          <div className="channel-filters chart-channel-legend">
-            {report.channelRows.map((row) => (
-              <button
-                className={`channel-pill ${row.dot}`}
-                key={row.key || row.name}
-              >
-                {row.name}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="donut-card">
-          <h2>Revenue Share by Channel</h2>
-
-          <div className="donut-chart-wrap">
-            <RevenueChart type="doughnut" data={report.channelData} />
-          </div>
-
-          <div className="chart-legend">
-            {report.channelRows
-              .filter((row) => row.revenue > 0)
-              .map((row) => (
-                <span key={row.key || row.name}>
-                  <span className={`dot ${row.dot}`}></span>
-                  {row.name}
-                </span>
-              ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="table-card full-width">
-        <div className="card-header">
-          <h2>Channel Performance</h2>
-          {includeSourceLabels ? <span>{report.sourceLabel}</span> : null}
-        </div>
-
-        <table className="channel-table">
-          <thead>
-            <tr>
-              <th>CHANNEL</th>
-              <th>TABLES</th>
-              <th>SHARE</th>
-              <th>AVG / TABLE</th>
-              <th>REVENUE</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {report.channelRows.map((row) => (
-              <tr key={row.key || row.name}>
-                <td data-label="Channel">
-                  <span className={`dot ${row.dot}`}></span>
-                  {row.name}
-                </td>
-                <td data-label="Tables">{row.tables}</td>
-                <td data-label="Share">{row.share}</td>
-                <td data-label="Avg / Table">{row.avg}</td>
-                <td className="revenue" data-label="Revenue">
-                  {row.formattedRevenue}
-                </td>
-              </tr>
-            ))}
-
-            <tr className="total-row">
-              <td data-label="Channel">Total</td>
-              <td data-label="Tables">{report.totalRow.tables}</td>
-              <td data-label="Share">100%</td>
-              <td data-label="Avg / Table">{report.totalRow.avg}</td>
-              <td className="revenue" data-label="Revenue">
-                {report.totalRow.revenue}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </>
-  );
-}
-
-function AncillaryDashboard({
-  report,
-  includeExecutiveSummary = true,
-  includeExportTimestamp = true,
-  includeSourceLabels = true,
-}) {
-  return (
-    <>
-      {includeExecutiveSummary ? (
-        <PrintSummary
-          report={report}
-          type="ancillary"
-          includeTimestamp={includeExportTimestamp}
-        />
-      ) : null}
-
-      <div className="metrics">
-        {report.cards.map((card) => (
-          <RevenueCard key={card.title} {...card} />
-        ))}
-      </div>
-
-      <div className="content-grid">
-        <div className="chart-card">
-          <div className="card-header">
-            <h2 className="card-title">Ancillary Revenue by Department</h2>
-            {includeSourceLabels ? <span>{report.sourceLabel}</span> : null}
-          </div>
-
-          <RevenueChart data={report.chartData} />
-        </div>
-
-        <div className="table-card">
-          <EventTable events={report.events} />
-        </div>
-      </div>
-    </>
-  );
-}
-
-function OverviewDashboard({ report, onExport }) {
-  return (
-    <>
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Dashboard</h1>
-          <p className="page-subtitle">
-            Executive overview across uploaded section reports, monthly revenue
-            movement, department mix, and strongest sales days.
-          </p>
-        </div>
-
-        <div className="header-actions">
-          <button className="export-btn" type="button" onClick={onExport}>
-            <FileText size={16} strokeWidth={2.2} />
-            <span>Export PDF</span>
-          </button>
-        </div>
-      </div>
-
-      <div className="metrics five-cols">
-        {report.cards.map((card) => (
-          <RevenueCard key={card.title} {...card} />
-        ))}
-      </div>
-
-      <div className="overview-grid">
-        <div className="chart-card">
-          <div className="card-header">
-            <h2>Monthly Revenue Trend</h2>
-            <span>Combined across uploaded sections</span>
-          </div>
-          <RevenueChart type="trend" data={report.monthlyRevenue} />
-        </div>
-
-        <div className="donut-card">
-          <h2>Revenue by Department</h2>
-
-          <div className="donut-chart-wrap">
-            <RevenueChart type="doughnut" data={report.departmentData} />
-          </div>
-
-          <div className="chart-legend overview-legend">
-            {report.departmentData.map((row) => (
-              <span key={row.name}>
-                <span className="dot"></span>
-                {row.name}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="table-card full-width overview-full-table">
-        <div className="card-header">
-          <h2>Best Sales Days</h2>
-          <span>Highest day-wise revenue from uploaded daily reports</span>
-        </div>
-
-        <table className="channel-table overview-best-days-table">
-          <thead>
-            <tr>
-              <th>DAY</th>
-              <th>SECTION</th>
-              <th>TOP DRIVER</th>
-              <th>REVENUE</th>
-            </tr>
-          </thead>
-          <tbody>
-            {report.bestSalesDays.map((row) => (
-              <tr key={`${row.label}-${row.section}`}>
-                <td>{row.label}</td>
-                <td>{row.section}</td>
-                <td>{row.topChannel}</td>
-                <td className="revenue">{row.formattedRevenue}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </>
-  );
-}
-
 function App() {
   const [settings, setSettings] = useState(readDashboardSettings);
   const [page, setPage] = useState(() => readDashboardSettings().landingPage);
@@ -1764,13 +1012,24 @@ function App() {
               uploadStatus={uploadStatus}
               databaseStatus={databaseStatus}
               onUpload={handleUpload}
-              onDelete={handleDeleteReport}
+              renderDeleteAction={(report) => (
+                <button
+                  className="danger-btn icon-only-btn"
+                  aria-label={`Delete ${report.monthLabel} report`}
+                  title={`Delete ${report.monthLabel} report`}
+                  type="button"
+                  onClick={() => handleDeleteReport(report)}
+                >
+                  <Trash2 size={16} strokeWidth={2.2} />
+                </button>
+              )}
             />
           ) : isSettings ? (
             <SettingsPage
               settings={settings}
               databaseStatus={databaseStatus}
               reportCounts={reportCounts}
+              pageOptions={APP_PAGE_OPTIONS}
               onChangeSetting={(key, value) =>
                 setSettings((current) => ({
                   ...current,
@@ -1853,58 +1112,58 @@ function App() {
                     ) : null}
                   </select>
 
-                <button className="date-btn">
-                  <CalendarDays size={16} strokeWidth={2.2} />
-                  <span>{activePeriodLabel}</span>
-                </button>
+                  <button className="date-btn">
+                    <CalendarDays size={16} strokeWidth={2.2} />
+                    <span>{activePeriodLabel}</span>
+                  </button>
 
-                <button
-                  className="export-btn"
-                  disabled={!canExport}
-                  onClick={handleExport}
-                >
-                  <FileText size={16} strokeWidth={2.2} />
-                  <span>Export PDF</span>
-                </button>
+                  <button
+                    className="export-btn"
+                    disabled={!canExport}
+                    onClick={handleExport}
+                  >
+                    <FileText size={16} strokeWidth={2.2} />
+                    <span>Export PDF</span>
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {isFood && foodReport ? (
-              <FoodDashboard
-                report={foodReport}
-                aggregateIntervalDays={aggregateIntervalDays}
-                intervalOptions={foodIntervalOptions}
-                includeExecutiveSummary={settings.includeExecutiveSummary}
-                includeExportTimestamp={settings.includeExportTimestamp}
-                includeSourceLabels={settings.includeSourceLabels}
-                onChangeAggregateInterval={setAggregateIntervalDays}
-              />
-            ) : null}
+              {isFood && foodReport ? (
+                <FoodDashboard
+                  report={foodReport}
+                  aggregateIntervalDays={aggregateIntervalDays}
+                  intervalOptions={foodIntervalOptions}
+                  includeExecutiveSummary={settings.includeExecutiveSummary}
+                  includeExportTimestamp={settings.includeExportTimestamp}
+                  includeSourceLabels={settings.includeSourceLabels}
+                  onChangeAggregateInterval={setAggregateIntervalDays}
+                />
+              ) : null}
 
-            {!isFood && ancillaryReport ? (
-              <AncillaryDashboard
-                report={ancillaryReport}
-                includeExecutiveSummary={settings.includeExecutiveSummary}
-                includeExportTimestamp={settings.includeExportTimestamp}
-                includeSourceLabels={settings.includeSourceLabels}
-              />
-            ) : null}
+              {!isFood && ancillaryReport ? (
+                <AncillaryDashboard
+                  report={ancillaryReport}
+                  includeExecutiveSummary={settings.includeExecutiveSummary}
+                  includeExportTimestamp={settings.includeExportTimestamp}
+                  includeSourceLabels={settings.includeSourceLabels}
+                />
+              ) : null}
 
-            {isLoadingReports ? <LoadingReportState /> : null}
+              {isLoadingReports ? <LoadingReportState /> : null}
 
-            {isFood && !foodReport && !isLoadingReports ? (
-              <EmptyReportState
-                title="Food & Beverage"
-                onOpenReports={() => setPage("reports")}
-              />
-            ) : null}
+              {isFood && !foodReport && !isLoadingReports ? (
+                <EmptyReportState
+                  title="Food & Beverage"
+                  onOpenReports={() => setPage("reports")}
+                />
+              ) : null}
 
-            {!isFood && !ancillaryReport && !isLoadingReports ? (
-              <EmptyReportState
-                title="Spa · Banquet · Other"
-                onOpenReports={() => setPage("reports")}
-              />
-            ) : null}
+              {!isFood && !ancillaryReport && !isLoadingReports ? (
+                <EmptyReportState
+                  title="Spa · Banquet · Other"
+                  onOpenReports={() => setPage("reports")}
+                />
+              ) : null}
             </>
           )}
         </div>

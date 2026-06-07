@@ -1,0 +1,37 @@
+.loading-report-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 180px);
+  gap: 18px;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.loading-copy {
+  max-width: 480px;
+}
+
+.loading-copy h2 {
+  margin: 0 0 8px;
+  color: #26241f;
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.loading-copy p {
+  margin: 0;
+  color: #7c7768;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.loading-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid #e8dfcf;
+  border-top-color: #c2a14d;
+  border-radius: 999px;
+  animation: report-spin 0.8s linear infinite;
+}

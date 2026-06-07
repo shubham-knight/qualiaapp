@@ -1,0 +1,27 @@
+.empty-report {
+  display: flex;
+  max-width: 620px;
+  min-height: 260px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 16px;
+  background: white;
+  border: 1px solid #e6decd;
+  border-radius: 18px;
+  margin-top: 28px;
+  padding: 32px;
+}
+
+.empty-report h2 {
+  margin: 0;
+  color: #26241f;
+  font-size: 28px;
+}
+
+.empty-report p {
+  max-width: 520px;
+  margin: 0;
+  color: #7c7768;
+  line-height: 1.6;
+}

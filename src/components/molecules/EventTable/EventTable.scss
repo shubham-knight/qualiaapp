@@ -1,0 +1,15 @@
+.events-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.events-table th {
+  text-align: left;
+  color: var(--muted);
+  padding-bottom: 14px;
+}
+
+.events-table td {
+  padding: 18px 0;
+  border-top: 1px solid #ece6db;
+}

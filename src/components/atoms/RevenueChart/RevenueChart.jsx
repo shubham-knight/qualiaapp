@@ -21,24 +21,13 @@ const COLORS = {
   eazyDinner: "#8aa893",
 };
 
-const PIE_COLORS = [
-  "#1f3d2f",
-  "#c2a14d",
-  "#d98b4a",
-  "#6b7b9c",
-  "#8aa893",
-];
+const PIE_COLORS = ["#1f3d2f", "#c2a14d", "#d98b4a", "#6b7b9c", "#8aa893"];
 
 const formatAxisCurrency = (value) => {
   if (!Number.isFinite(value)) return value;
 
-  if (Math.abs(value) >= 100000) {
-    return `₹${(value / 100000).toFixed(1)}L`;
-  }
-
-  if (Math.abs(value) >= 1000) {
-    return `₹${Math.round(value / 1000)}k`;
-  }
+  if (Math.abs(value) >= 100000) return `₹${(value / 100000).toFixed(1)}L`;
+  if (Math.abs(value) >= 1000) return `₹${Math.round(value / 1000)}k`;
 
   return `₹${Math.round(value)}`;
 };
@@ -50,17 +39,9 @@ const formatTooltipCurrency = (value) =>
     maximumFractionDigits: 0,
   }).format(Math.round(value || 0));
 
-export default function RevenueChart({
-  data = [],
-  type = "bar",
-  xKey,
-  yKey,
-}) {
-  const resolvedXKey =
-    xKey || (data[0]?.day ? "day" : "name");
-
-  const resolvedYKey =
-    yKey || (data[0]?.value ? "value" : "revenue");
+export default function RevenueChart({ data = [], type = "bar", xKey, yKey }) {
+  const resolvedXKey = xKey || (data[0]?.day ? "day" : "name");
+  const resolvedYKey = yKey || (data[0]?.value ? "value" : "revenue");
 
   if (type === "doughnut") {
     return (
@@ -77,10 +58,7 @@ export default function RevenueChart({
             paddingAngle={2}
           >
             {data.map((_, index) => (
-              <Cell
-                key={index}
-                fill={PIE_COLORS[index % PIE_COLORS.length]}
-              />
+              <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
             ))}
           </Pie>
         </PieChart>
@@ -122,8 +100,7 @@ export default function RevenueChart({
     );
   }
 
-  const isFoodChart =
-    data[0]?.walkIn !== undefined;
+  const isFoodChart = data[0]?.walkIn !== undefined;
 
   return (
     <ResponsiveContainer width="100%" height={350}>
@@ -134,26 +111,10 @@ export default function RevenueChart({
 
         {isFoodChart ? (
           <>
-            <Bar
-              dataKey="walkIn"
-              stackId="food"
-              fill={COLORS.walkIn}
-            />
-            <Bar
-              dataKey="zomato"
-              stackId="food"
-              fill={COLORS.zomato}
-            />
-            <Bar
-              dataKey="swiggy"
-              stackId="food"
-              fill={COLORS.swiggy}
-            />
-            <Bar
-              dataKey="dineout"
-              stackId="food"
-              fill={COLORS.dineout}
-            />
+            <Bar dataKey="walkIn" stackId="food" fill={COLORS.walkIn} />
+            <Bar dataKey="zomato" stackId="food" fill={COLORS.zomato} />
+            <Bar dataKey="swiggy" stackId="food" fill={COLORS.swiggy} />
+            <Bar dataKey="dineout" stackId="food" fill={COLORS.dineout} />
             <Bar
               dataKey="eazyDinner"
               stackId="food"
@@ -162,11 +123,7 @@ export default function RevenueChart({
             />
           </>
         ) : (
-          <Bar
-            dataKey={resolvedYKey}
-            fill="#1f3d2f"
-            radius={[6, 6, 0, 0]}
-          />
+          <Bar dataKey={resolvedYKey} fill="#1f3d2f" radius={[6, 6, 0, 0]} />
         )}
       </BarChart>
     </ResponsiveContainer>

@@ -1,0 +1,44 @@
+.construction-page {
+  min-height: calc(100vh - 180px);
+}
+
+.construction-panel {
+  display: flex;
+  max-width: 760px;
+  min-height: 340px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 14px;
+  background: white;
+  border: 1px solid #e6decd;
+  border-radius: 16px;
+  box-shadow: 0 14px 34px rgba(49, 39, 20, 0.04);
+  padding: 32px;
+}
+
+.construction-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(194, 161, 77, 0.15);
+  color: #9f7c25;
+}
+
+.construction-panel h2 {
+  margin: 0;
+  color: #26241f;
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.construction-panel p {
+  max-width: 560px;
+  margin: 0;
+  color: #7c7768;
+  font-size: 15px;
+  line-height: 1.65;
+}

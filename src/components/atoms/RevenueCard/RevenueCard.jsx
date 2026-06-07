@@ -10,9 +10,7 @@ export default function RevenueCard({
 
   return (
     <div className="metric-card">
-      <div className="metric-title">
-        {title}
-      </div>
+      <div className="metric-title">{title}</div>
 
       <div className={`metric-value ${compactValue ? "compact" : ""}`.trim()}>
         {value}

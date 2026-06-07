@@ -1,0 +1,59 @@
+.food-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.chart-interval-select {
+  min-width: 170px;
+}
+
+.channel-filters {
+  display: flex;
+  gap: 8px;
+}
+
+.channel-filters button {
+  flex: 0 0 auto;
+  min-height: 30px;
+  border: none;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-weight: 700;
+}
+
+.chart-channel-legend {
+  justify-content: center;
+  border-top: 1px solid #ece6d8;
+  margin-top: 8px;
+  padding-top: 14px;
+}
+
+.channel-filters .channel-pill {
+  border: 1px solid transparent;
+  color: white;
+}
+
+.channel-filters .channel-pill.green {
+  background: #1f3d2f;
+}
+
+.channel-filters .channel-pill.gold {
+  background: #c2a14d;
+  color: #1f3328;
+}
+
+.channel-filters .channel-pill.orange {
+  background: #d98b4a;
+  color: #25180e;
+}
+
+.channel-filters .channel-pill.blue {
+  background: #6b7b9c;
+}
+
+.channel-filters .channel-pill.sage {
+  background: #8aa893;
+  color: #172a20;
+}
