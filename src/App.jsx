@@ -733,23 +733,27 @@ function FoodDashboard({
           <tbody>
             {report.channelRows.map((row) => (
               <tr key={row.key || row.name}>
-                <td>
+                <td data-label="Channel">
                   <span className={`dot ${row.dot}`}></span>
                   {row.name}
                 </td>
-                <td>{row.tables}</td>
-                <td>{row.share}</td>
-                <td>{row.avg}</td>
-                <td className="revenue">{row.formattedRevenue}</td>
+                <td data-label="Tables">{row.tables}</td>
+                <td data-label="Share">{row.share}</td>
+                <td data-label="Avg / Table">{row.avg}</td>
+                <td className="revenue" data-label="Revenue">
+                  {row.formattedRevenue}
+                </td>
               </tr>
             ))}
 
             <tr className="total-row">
-              <td>Total</td>
-              <td>{report.totalRow.tables}</td>
-              <td>100%</td>
-              <td>{report.totalRow.avg}</td>
-              <td className="revenue">{report.totalRow.revenue}</td>
+              <td data-label="Channel">Total</td>
+              <td data-label="Tables">{report.totalRow.tables}</td>
+              <td data-label="Share">100%</td>
+              <td data-label="Avg / Table">{report.totalRow.avg}</td>
+              <td className="revenue" data-label="Revenue">
+                {report.totalRow.revenue}
+              </td>
             </tr>
           </tbody>
         </table>
