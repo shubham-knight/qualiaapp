@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, FileText } from "lucide-react";
+import { CalendarDays, FileText, Trash2 } from "lucide-react";
 
 import Sidebar from "./components/Sidebar";
 import RevenueCard from "./components/RevenueCard";
@@ -458,7 +458,7 @@ function ReportsPage({
   );
 
   return (
-    <>
+    <div className="reports-page">
       <div className="page-header">
         <div>
           <h1 className="page-title">Reports</h1>
@@ -518,13 +518,11 @@ function ReportsPage({
           </div>
         </div>
 
-        <table className="channel-table">
+        <table className="channel-table reports-table">
           <thead>
             <tr>
               <th>SECTION</th>
               <th>MONTH</th>
-              <th>FILE</th>
-              <th>ROWS</th>
               <th>ACTION</th>
             </tr>
           </thead>
@@ -534,15 +532,15 @@ function ReportsPage({
               <tr key={report.id || `${report.section}-${report.monthKey}`}>
                 <td>{report.sectionTitle}</td>
                 <td>{report.monthLabel}</td>
-                <td>{report.fileName}</td>
-                <td>{report.rows.length}</td>
                 <td>
                   <button
-                    className="danger-btn"
+                    className="danger-btn icon-only-btn"
+                    aria-label={`Delete ${report.monthLabel} report`}
+                    title={`Delete ${report.monthLabel} report`}
                     type="button"
                     onClick={() => onDelete(report)}
                   >
-                    Delete
+                    <Trash2 size={16} strokeWidth={2.2} />
                   </button>
                 </td>
               </tr>
@@ -550,7 +548,7 @@ function ReportsPage({
 
             {!visibleReports.length ? (
               <tr>
-                <td colSpan="5">No reports uploaded for this filter</td>
+                <td colSpan="3">No reports uploaded for this filter</td>
               </tr>
             ) : null}
           </tbody>
@@ -579,7 +577,7 @@ function ReportsPage({
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
