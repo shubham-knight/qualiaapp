@@ -41,6 +41,58 @@ const uploadTargets = [
   },
 ];
 
+const APP_PAGE_OPTIONS = [
+  {
+    key: "dashboard",
+    label: "Dashboard",
+    description: "Executive cumulative overview across uploaded sections.",
+    status: "Live",
+    detail: "Shows cumulative KPIs, monthly revenue, department mix, and best sales days.",
+  },
+  {
+    key: "rooms",
+    label: "Rooms & Occupancy",
+    description: "Occupancy, ADR, RevPAR, and room-mix monitoring.",
+    status: "Under construction",
+    detail: "This page is prepared in navigation and settings, ready for upload-backed room metrics.",
+  },
+  {
+    key: "food",
+    label: "Food & Beverage",
+    description: "Channel revenue, covers, cheque size, and interval views.",
+    status: "Live",
+    detail: "Supports single-month and multi-month interval defaults from settings.",
+  },
+  {
+    key: "regions",
+    label: "Regions & Sources",
+    description: "Geography, source mix, and contribution analysis.",
+    status: "Under construction",
+    detail: "Navigation is ready, with data views to be connected when region/source uploads are added.",
+  },
+  {
+    key: "spa",
+    label: "Spa · Banquet · Other",
+    description: "Department revenue and ancillary event performance.",
+    status: "Live",
+    detail: "Uses uploaded ancillary reports for cards, charts, and event tables.",
+  },
+  {
+    key: "reports",
+    label: "Reports",
+    description: "Upload, review, filter, and delete stored reports.",
+    status: "Live",
+    detail: "Controls the persisted report inventory powering all live dashboards.",
+  },
+  {
+    key: "settings",
+    label: "Settings",
+    description: "Navigation defaults, export behavior, and storage controls.",
+    status: "Live",
+    detail: "The operational control center for the app shell and report handling.",
+  },
+];
+
 const SINGLE_MONTH_INTERVAL_OPTIONS = [
   { value: 1, label: "Daily" },
   { value: 2, label: "2-day intervals" },
@@ -324,6 +376,170 @@ const bucketSingleFoodDailyData = (dailyData, channelRows, intervalDays, periodL
   });
 
   return [...bucketMap.values()];
+};
+
+const getFoodReportRevenue = (report) =>
+  (report?.channelRows || []).reduce((total, row) => total + (row.revenue || 0), 0);
+
+const getAncillaryReportRevenue = (report) =>
+  (report?.chartData || []).reduce(
+    (total, row) => total + (Number(row.revenue || 0) * 100000 || 0),
+    0,
+  );
+
+const buildOverviewReport = (uploads) => {
+  const foodReports = sortReports(uploads.food || []);
+  const spaReports = sortReports(uploads.spa || []);
+
+  if (!foodReports.length && !spaReports.length) return null;
+
+  const totalFoodRevenue = foodReports.reduce(
+    (total, uploadedReport) => total + getFoodReportRevenue(uploadedReport.report),
+    0,
+  );
+  const totalAncillaryRevenue = spaReports.reduce(
+    (total, uploadedReport) => total + getAncillaryReportRevenue(uploadedReport.report),
+    0,
+  );
+  const totalRevenue = totalFoodRevenue + totalAncillaryRevenue;
+
+  const sectionRows = [
+    {
+      key: "food",
+      name: "Food & Beverage",
+      revenue: totalFoodRevenue,
+      share: totalRevenue ? (totalFoodRevenue / totalRevenue) * 100 : 0,
+    },
+    {
+      key: "spa",
+      name: "Spa · Banquet · Other",
+      revenue: totalAncillaryRevenue,
+      share: totalRevenue ? (totalAncillaryRevenue / totalRevenue) * 100 : 0,
+    },
+  ].filter((row) => row.revenue > 0);
+
+  const topSection =
+    [...sectionRows].sort((a, b) => b.revenue - a.revenue)[0] || sectionRows[0];
+
+  const monthlyMap = new Map();
+
+  foodReports.forEach((uploadedReport) => {
+    const revenue = getFoodReportRevenue(uploadedReport.report);
+    const current = monthlyMap.get(uploadedReport.monthKey) || {
+      name: uploadedReport.monthShort || uploadedReport.monthLabel,
+      revenue: 0,
+    };
+
+    current.revenue += revenue;
+    monthlyMap.set(uploadedReport.monthKey, current);
+  });
+
+  spaReports.forEach((uploadedReport) => {
+    const revenue = getAncillaryReportRevenue(uploadedReport.report);
+    const current = monthlyMap.get(uploadedReport.monthKey) || {
+      name: uploadedReport.monthShort || uploadedReport.monthLabel,
+      revenue: 0,
+    };
+
+    current.revenue += revenue;
+    monthlyMap.set(uploadedReport.monthKey, current);
+  });
+
+  const monthlyRevenue = [...monthlyMap.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, row]) => row);
+  const bestMonth =
+    [...monthlyRevenue].sort((a, b) => b.revenue - a.revenue)[0] || monthlyRevenue[0];
+
+  const departmentMap = new Map();
+  if (totalFoodRevenue > 0) {
+    departmentMap.set("Food & Beverage", totalFoodRevenue);
+  }
+
+  spaReports.forEach((uploadedReport) => {
+    uploadedReport.report.chartData.forEach((row) => {
+      departmentMap.set(
+        row.name,
+        (departmentMap.get(row.name) || 0) + Number(row.revenue || 0) * 100000,
+      );
+    });
+  });
+
+  const departmentData = [...departmentMap.entries()]
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value);
+
+  const bestSalesDays = foodReports
+    .flatMap((uploadedReport) =>
+      (uploadedReport.report.dailyData || []).map((row) => {
+        const revenue = (uploadedReport.report.channelRows || []).reduce(
+          (total, channel) => total + (row[channel.key] || 0),
+          0,
+        );
+        const topChannel =
+          [...(uploadedReport.report.channelRows || [])].sort(
+            (a, b) => (row[b.key] || 0) - (row[a.key] || 0),
+          )[0] || {};
+
+        return {
+          label: `${row.day} ${uploadedReport.monthShort || uploadedReport.monthLabel}`,
+          section: "Food & Beverage",
+          revenue,
+          topChannel: topChannel.name || "-",
+          formattedRevenue: formatCurrency(revenue),
+        };
+      }),
+    )
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5);
+
+  return {
+    cards: [
+      {
+        title: "Total Revenue",
+        value: formatCompactCurrency(totalRevenue),
+        growth: `${foodReports.length + spaReports.length} uploaded reports`,
+        subtitle: "",
+        trendTone: "muted",
+      },
+      {
+        title: "Food & Beverage",
+        value: formatCompactCurrency(totalFoodRevenue),
+        growth: totalRevenue
+          ? `${((totalFoodRevenue / totalRevenue) * 100).toFixed(1)}% share`
+          : "No contribution yet",
+        subtitle: "",
+        trendTone: "muted",
+      },
+      {
+        title: "Spa · Banquet · Other",
+        value: formatCompactCurrency(totalAncillaryRevenue),
+        growth: totalRevenue
+          ? `${((totalAncillaryRevenue / totalRevenue) * 100).toFixed(1)}% share`
+          : "No contribution yet",
+        subtitle: "",
+        trendTone: "muted",
+      },
+      {
+        title: "Leading Section",
+        value: topSection?.name || "-",
+        growth: topSection ? formatCurrency(topSection.revenue) : "No data yet",
+        subtitle: topSection ? `${topSection.share.toFixed(1)}% of total` : "",
+        trendTone: "muted",
+      },
+      {
+        title: "Best Month",
+        value: bestMonth?.name || "-",
+        growth: bestMonth ? formatCurrency(bestMonth.revenue) : "No data yet",
+        subtitle: "highest combined revenue",
+        trendTone: "muted",
+      },
+    ],
+    monthlyRevenue,
+    sectionRows,
+    departmentData,
+    bestSalesDays,
+  };
 };
 
 const sumFoodReports = (reports, periodLabel, intervalDays) => {
@@ -643,7 +859,7 @@ function SettingsPage({
         <section className="settings-panel">
           <div className="settings-panel-header">
             <MonitorCog size={18} strokeWidth={2.2} />
-            <h2>General</h2>
+            <h2>Pages & Navigation</h2>
           </div>
 
           <div className="settings-field">
@@ -654,12 +870,32 @@ function SettingsPage({
               value={settings.landingPage}
               onChange={(event) => onChangeSetting("landingPage", event.target.value)}
             >
-              <option value="food">Food & Beverage</option>
-              <option value="spa">Spa · Banquet · Other</option>
-              <option value="reports">Reports</option>
-              <option value="settings">Settings</option>
+              {APP_PAGE_OPTIONS.map((pageOption) => (
+                <option key={pageOption.key} value={pageOption.key}>
+                  {pageOption.label}
+                </option>
+              ))}
             </select>
             <p>Used on the next app load.</p>
+          </div>
+
+          <div className="settings-page-list">
+            {APP_PAGE_OPTIONS.map((pageOption) => (
+              <div className="settings-page-row" key={pageOption.key}>
+                <div className="settings-page-copy">
+                  <strong>{pageOption.label}</strong>
+                  <span>{pageOption.description}</span>
+                  <small>{pageOption.detail}</small>
+                </div>
+                <span
+                  className={`settings-page-badge ${
+                    pageOption.status === "Live" ? "is-live" : "is-soon"
+                  }`.trim()}
+                >
+                  {pageOption.status}
+                </span>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -1108,6 +1344,90 @@ function AncillaryDashboard({
   );
 }
 
+function OverviewDashboard({ report, onExport }) {
+  return (
+    <>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Dashboard</h1>
+          <p className="page-subtitle">
+            Executive overview across uploaded section reports, monthly revenue
+            movement, department mix, and strongest sales days.
+          </p>
+        </div>
+
+        <div className="header-actions">
+          <button className="export-btn" type="button" onClick={onExport}>
+            <FileText size={16} strokeWidth={2.2} />
+            <span>Export PDF</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="metrics five-cols">
+        {report.cards.map((card) => (
+          <RevenueCard key={card.title} {...card} />
+        ))}
+      </div>
+
+      <div className="overview-grid">
+        <div className="chart-card">
+          <div className="card-header">
+            <h2>Monthly Revenue Trend</h2>
+            <span>Combined across uploaded sections</span>
+          </div>
+          <RevenueChart type="trend" data={report.monthlyRevenue} />
+        </div>
+
+        <div className="donut-card">
+          <h2>Revenue by Department</h2>
+
+          <div className="donut-chart-wrap">
+            <RevenueChart type="doughnut" data={report.departmentData} />
+          </div>
+
+          <div className="chart-legend overview-legend">
+            {report.departmentData.map((row) => (
+              <span key={row.name}>
+                <span className="dot"></span>
+                {row.name}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="table-card full-width overview-full-table">
+        <div className="card-header">
+          <h2>Best Sales Days</h2>
+          <span>Highest day-wise revenue from uploaded daily reports</span>
+        </div>
+
+        <table className="channel-table overview-best-days-table">
+          <thead>
+            <tr>
+              <th>DAY</th>
+              <th>SECTION</th>
+              <th>TOP DRIVER</th>
+              <th>REVENUE</th>
+            </tr>
+          </thead>
+          <tbody>
+            {report.bestSalesDays.map((row) => (
+              <tr key={`${row.label}-${row.section}`}>
+                <td>{row.label}</td>
+                <td>{row.section}</td>
+                <td>{row.topChannel}</td>
+                <td className="revenue">{row.formattedRevenue}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
 function App() {
   const [settings, setSettings] = useState(readDashboardSettings);
   const [page, setPage] = useState(() => readDashboardSettings().landingPage);
@@ -1186,8 +1506,16 @@ function App() {
     return createActiveReport(uploads.spa, selections.spa, "spa");
   }, [uploads.spa, selections.spa]);
 
-  const activeReport = page === "food" ? foodReport : ancillaryReport;
-  const canExport = page !== "reports" && Boolean(activeReport);
+  const overviewReport = useMemo(() => buildOverviewReport(uploads), [uploads]);
+
+  const activeReport =
+    page === "dashboard"
+      ? overviewReport
+      : page === "food"
+        ? foodReport
+        : ancillaryReport;
+  const canExport =
+    page !== "reports" && page !== "settings" && Boolean(activeReport);
 
   const handleExport = () => {
     if (!canExport) return;
@@ -1381,7 +1709,7 @@ function App() {
   const isFood = page === "food";
   const isReports = page === "reports";
   const isSettings = page === "settings";
-  const isConstructionPage = ["dashboard", "rooms", "regions"].includes(page);
+  const isConstructionPage = ["rooms", "regions"].includes(page);
   const activeKey = isFood ? "food" : "spa";
   const activeUploads = uploads[activeKey] || [];
   const activeSelection =
@@ -1452,28 +1780,31 @@ function App() {
               onClearAllReports={() => handleClearReports()}
               onClearSectionReports={handleClearReports}
             />
+          ) : page === "dashboard" ? (
+            isLoadingReports ? (
+              <LoadingReportState />
+            ) : overviewReport ? (
+              <OverviewDashboard report={overviewReport} onExport={handleExport} />
+            ) : (
+              <EmptyReportState
+                title="Dashboard"
+                onOpenReports={() => setPage("reports")}
+              />
+            )
           ) : isConstructionPage ? (
             <UnderConstructionPage
               title={
-                page === "dashboard"
-                  ? "Dashboard"
-                  : page === "rooms"
-                    ? "Rooms & Occupancy"
-                    : "Regions & Sources"
+                page === "rooms" ? "Rooms & Occupancy" : "Regions & Sources"
               }
               punchline={
-                page === "dashboard"
-                  ? "The front desk is still setting the board."
-                  : page === "rooms"
-                    ? "This wing is being readied for check-in."
-                    : "The map room is still pinning the routes."
+                page === "rooms"
+                  ? "This wing is being readied for check-in."
+                  : "The map room is still pinning the routes."
               }
               detail={
-                page === "dashboard"
-                  ? "A consolidated executive overview will appear here."
-                  : page === "rooms"
-                    ? "Occupancy, ADR, RevPAR, and room mix views will appear here."
-                    : "Geography, source mix, and channel contribution views will appear here."
+                page === "rooms"
+                  ? "Occupancy, ADR, RevPAR, and room mix views will appear here."
+                  : "Geography, source mix, and channel contribution views will appear here."
               }
             />
           ) : (

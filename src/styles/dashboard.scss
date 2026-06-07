@@ -112,8 +112,8 @@
 }
 
 .metric-value {
-  font-size: 56px;
-  font-weight: 800;
+  font-size: 48px;
+  font-weight: 720;
   color: var(--text);
 }
 
@@ -564,6 +564,73 @@
   line-height: 1.5;
 }
 
+.settings-page-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.settings-page-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid #ece6d8;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.settings-page-copy {
+  min-width: 0;
+}
+
+.settings-page-copy strong {
+  display: block;
+  color: #26241f;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.settings-page-copy span,
+.settings-page-copy small {
+  display: block;
+  color: #7c7768;
+  line-height: 1.45;
+}
+
+.settings-page-copy span {
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.settings-page-copy small {
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.settings-page-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-height: 28px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0 10px;
+}
+
+.settings-page-badge.is-live {
+  background: rgba(47, 141, 85, 0.12);
+  color: #236a40;
+}
+
+.settings-page-badge.is-soon {
+  background: rgba(194, 161, 77, 0.16);
+  color: #8b6a1c;
+}
+
 .settings-select {
   min-width: 100%;
   max-width: none;
@@ -956,12 +1023,12 @@
 }
 
 .metric-value {
-  font-size: 34px;
+  font-size: 30px;
   line-height: 1;
 }
 
 .metric-value.compact {
-  font-size: 26px;
+  font-size: 24px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1240,6 +1307,76 @@
   transform-origin: top center;
 }
 
+/* DASHBOARD OVERVIEW */
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr);
+  gap: 18px;
+  margin-top: 22px;
+  align-items: stretch;
+}
+
+.overview-grid .chart-card,
+.overview-grid .table-card,
+.overview-grid .donut-card,
+.overview-full-table {
+  overflow: hidden;
+}
+
+.overview-grid .donut-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.overview-full-table {
+  margin-top: 18px;
+}
+
+.overview-best-days-table {
+  min-width: 0;
+}
+
+.overview-best-days-table th:last-child,
+.overview-best-days-table td:last-child {
+  text-align: right;
+}
+
+.overview-best-days-table td:nth-child(2),
+.overview-best-days-table td:nth-child(3) {
+  color: #5f594f;
+}
+
+.overview-legend .dot {
+  margin-right: 8px;
+}
+
+.overview-legend span:nth-child(1) .dot {
+  background: #1f3d2f;
+}
+
+.overview-legend span:nth-child(2) .dot {
+  background: #c2a14d;
+}
+
+.overview-legend span:nth-child(3) .dot {
+  background: #d98b4a;
+}
+
+.overview-legend span:nth-child(4) .dot {
+  background: #6b7b9c;
+}
+
+.overview-legend span:nth-child(5) .dot {
+  background: #8aa893;
+}
+
+@for $i from 6 through 12 {
+  .overview-legend span:nth-child(#{$i}) .dot {
+    background: #1f3d2f;
+  }
+}
+
 @keyframes page-fade-in {
   from {
     opacity: 0;
@@ -1413,7 +1550,8 @@
   }
 
   .content-grid,
-  .food-grid {
+  .food-grid,
+  .overview-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1650,6 +1788,10 @@
     grid-template-columns: 1fr;
   }
 
+  .overview-grid {
+    gap: 16px;
+  }
+
   .metric-card,
   .donut-card,
   .chart-card,
@@ -1660,7 +1802,7 @@
   }
 
   .metric-value {
-    font-size: 30px;
+    font-size: 28px;
   }
 
   .card-header {
@@ -1721,6 +1863,14 @@
 
   .settings-panel-header h2 {
     font-size: 18px;
+  }
+
+  .settings-page-row {
+    flex-direction: column;
+  }
+
+  .settings-page-badge {
+    align-self: flex-start;
   }
 
   .settings-stats {
@@ -1887,6 +2037,69 @@
 
   .food-grid + .table-card .channel-table td:last-child {
     padding-bottom: 0;
+  }
+
+  .overview-best-days-table {
+    min-width: 0;
+  }
+
+  .overview-best-days-table thead {
+    display: none;
+  }
+
+  .overview-best-days-table,
+  .overview-best-days-table tbody,
+  .overview-best-days-table tr,
+  .overview-best-days-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .overview-best-days-table tbody {
+    display: grid;
+    gap: 12px;
+  }
+
+  .overview-best-days-table tr {
+    border: 1px solid #ece6d8;
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: #fff;
+  }
+
+  .overview-best-days-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border: 0;
+    padding: 7px 0;
+    text-align: right;
+  }
+
+  .overview-best-days-table td::before {
+    color: #8a8372;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    text-align: left;
+  }
+
+  .overview-best-days-table td:nth-child(1)::before {
+    content: "Day";
+  }
+
+  .overview-best-days-table td:nth-child(2)::before {
+    content: "Section";
+  }
+
+  .overview-best-days-table td:nth-child(3)::before {
+    content: "Top Driver";
+  }
+
+  .overview-best-days-table td:nth-child(4)::before {
+    content: "Revenue";
   }
 }
 
