@@ -424,7 +424,7 @@
   min-height: 220px;
   flex-direction: column;
   justify-content: space-between;
-  gap: 24px;
+  gap: 16px;
   background: white;
   border: 1px solid #e6decd;
   border-radius: 18px;
@@ -499,6 +499,10 @@
 
 .reports-page .upload-grid {
   margin-bottom: 18px;
+}
+
+.reports-page .upload-card p {
+  margin-top: 6px;
 }
 
 .reports-table th:last-child,
@@ -996,6 +1000,47 @@
   min-height: 220px;
 }
 
+.loading-report {
+  display: flex;
+  width: min(100%, 620px);
+  min-height: 220px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: white;
+  border: 1px solid #e6decd;
+  border-radius: 14px;
+  margin-top: 28px;
+  padding: 32px;
+}
+
+.loading-report p {
+  margin: 0;
+  color: #7c7768;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.loading-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid #e8dfcf;
+  border-top-color: #c2a14d;
+  border-radius: 999px;
+  animation: report-spin 0.8s linear infinite;
+}
+
+@keyframes report-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .page-transition {
   animation: page-fade-in 240ms ease;
   transform-origin: top center;
@@ -1036,6 +1081,10 @@
   .page-transition {
     animation: none;
     transition: none;
+  }
+
+  .loading-spinner {
+    animation: none;
   }
 }
 

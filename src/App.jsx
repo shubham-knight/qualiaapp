@@ -639,6 +639,15 @@ function EmptyReportState({ title, onOpenReports }) {
   );
 }
 
+function LoadingReportState() {
+  return (
+    <div className="loading-report" aria-live="polite" aria-busy="true">
+      <div className="loading-spinner"></div>
+      <p>Loading saved reports...</p>
+    </div>
+  );
+}
+
 function FoodDashboard({
   report,
   aggregateIntervalDays = 15,
@@ -800,6 +809,7 @@ function App() {
   });
   const [uploadStatus, setUploadStatus] = useState({});
   const [databaseStatus, setDatabaseStatus] = useState("Loading saved reports...");
+  const [isLoadingReports, setIsLoadingReports] = useState(true);
   const [selections, setSelections] = useState({
     food: "",
     spa: "",
@@ -826,12 +836,14 @@ function App() {
             ? `${reports.length} saved report(s) loaded from the database.`
             : "Database connected. No saved reports yet.",
         );
+        setIsLoadingReports(false);
       } catch (error) {
         if (!isMounted) return;
 
         setDatabaseStatus(
           `Report database is not available yet. Start it with npm run server. (${error.message})`,
         );
+        setIsLoadingReports(false);
       }
     }
 
@@ -1116,23 +1128,25 @@ function App() {
               />
             ) : null}
 
-              {!isFood && ancillaryReport ? (
-                <AncillaryDashboard report={ancillaryReport} />
-              ) : null}
+            {!isFood && ancillaryReport ? (
+              <AncillaryDashboard report={ancillaryReport} />
+            ) : null}
 
-              {isFood && !foodReport ? (
-                <EmptyReportState
-                  title="Food & Beverage"
-                  onOpenReports={() => setPage("reports")}
-                />
-              ) : null}
+            {isLoadingReports ? <LoadingReportState /> : null}
 
-              {!isFood && !ancillaryReport ? (
-                <EmptyReportState
-                  title="Spa · Banquet · Other"
-                  onOpenReports={() => setPage("reports")}
-                />
-              ) : null}
+            {isFood && !foodReport && !isLoadingReports ? (
+              <EmptyReportState
+                title="Food & Beverage"
+                onOpenReports={() => setPage("reports")}
+              />
+            ) : null}
+
+            {!isFood && !ancillaryReport && !isLoadingReports ? (
+              <EmptyReportState
+                title="Spa · Banquet · Other"
+                onOpenReports={() => setPage("reports")}
+              />
+            ) : null}
             </>
           )}
         </div>
