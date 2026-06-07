@@ -1000,26 +1000,33 @@
   min-height: 220px;
 }
 
-.loading-report {
+.loading-report-page {
   display: flex;
-  width: min(100%, 620px);
-  min-height: 220px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  background: white;
-  border: 1px solid #e6decd;
-  border-radius: 14px;
-  margin-top: 28px;
-  padding: 32px;
+  min-height: calc(100vh - 180px);
+  gap: 18px;
+  padding: 48px 24px;
+  text-align: center;
 }
 
-.loading-report p {
+.loading-copy {
+  max-width: 480px;
+}
+
+.loading-copy h2 {
+  margin: 0 0 8px;
+  color: #26241f;
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.loading-copy p {
   margin: 0;
   color: #7c7768;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .loading-spinner {
@@ -1456,6 +1463,19 @@
   .reports-page .schema-card p {
     font-size: 13px;
     line-height: 1.5;
+  }
+
+  .loading-report-page {
+    min-height: calc(100vh - 120px);
+    padding: 32px 18px;
+  }
+
+  .loading-copy h2 {
+    font-size: 24px;
+  }
+
+  .loading-copy p {
+    font-size: 13px;
   }
 
   .food-grid + .table-card .channel-table {
