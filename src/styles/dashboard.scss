@@ -1340,12 +1340,16 @@
 
   .reports-page .upload-card {
     min-height: 0;
-    gap: 18px;
-    padding: 18px;
+    gap: 12px;
+    padding: 16px;
   }
 
   .reports-page .upload-card h2 {
     font-size: 20px;
+  }
+
+  .reports-page .upload-card p {
+    margin-top: 6px;
   }
 
   .reports-page .upload-status {
@@ -1371,6 +1375,10 @@
   .reports-table td {
     padding: 14px 8px;
     font-size: 13px;
+  }
+
+  .reports-table td[colspan] {
+    text-align: center;
   }
 
   .reports-table th:first-child,
