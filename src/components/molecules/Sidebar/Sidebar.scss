@@ -108,3 +108,126 @@
   line-height: 1;
   padding: 5px 9px;
 }
+
+@media (max-width: 1024px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    width: auto;
+    min-height: 0;
+    height: auto;
+    padding: 12px 14px;
+    box-shadow: 0 16px 32px rgba(17, 34, 28, 0.16);
+    overflow: visible;
+  }
+
+  .sidebar-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .logo {
+    width: auto;
+    margin: 0;
+    grid-template-columns: 42px 1fr;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .logo-mark {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    font-size: 20px;
+  }
+
+  .logo h2 {
+    font-size: 18px;
+  }
+
+  .logo p {
+    font-size: 10px;
+    letter-spacing: 2.2px;
+  }
+
+  .sidebar-nav {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    margin-top: 12px;
+    padding-top: 0;
+    pointer-events: none;
+    transition:
+      max-height 220ms ease,
+      opacity 180ms ease,
+      padding-top 220ms ease;
+  }
+
+  .mobile-nav-open .sidebar-nav {
+    max-height: 420px;
+    opacity: 1;
+    padding-top: 12px;
+    pointer-events: auto;
+  }
+
+  .sidebar-section {
+    margin: 0 6px 8px;
+    font-size: 11px;
+    letter-spacing: 3px;
+  }
+
+  .sidebar-section:not(:first-of-type) {
+    margin-top: 18px;
+  }
+
+  .sidebar-item {
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    min-height: 44px;
+    width: 100%;
+    gap: 10px;
+    margin: 0 0 6px;
+    padding: 0 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    text-align: left;
+  }
+}
+
+@media (max-width: 720px) {
+  .sidebar {
+    padding: 12px 12px 10px;
+  }
+
+  .logo {
+    grid-template-columns: 36px 1fr;
+    gap: 10px;
+  }
+
+  .logo-mark {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .logo h2 {
+    font-size: 16px;
+  }
+
+  .logo p {
+    font-size: 9px;
+    letter-spacing: 1.8px;
+  }
+
+  .sidebar-item {
+    min-height: 40px;
+    padding: 0 11px;
+    font-size: 13px;
+  }
+}
