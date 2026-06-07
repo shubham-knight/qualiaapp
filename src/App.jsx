@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, FileText, Trash2 } from "lucide-react";
+import {
+  CalendarDays,
+  HardHat,
+  Database,
+  FileText,
+  MonitorCog,
+  Printer,
+  ShieldAlert,
+  Trash2,
+} from "lucide-react";
 
 import Sidebar from "./components/Sidebar";
 import RevenueCard from "./components/RevenueCard";
@@ -44,6 +53,36 @@ const MULTI_MONTH_INTERVAL_OPTIONS = [
   { value: 15, label: "15-day intervals" },
   { value: 31, label: "Monthly intervals" },
 ];
+
+const DEFAULT_SETTINGS = {
+  landingPage: "food",
+  singleMonthInterval: 1,
+  multiMonthInterval: 15,
+  replaceOnUpload: "replace",
+  includeExecutiveSummary: true,
+  includeSourceLabels: true,
+  includeExportTimestamp: true,
+};
+
+const SETTINGS_STORAGE_KEY = "qualia-dashboard-settings";
+
+const readDashboardSettings = () => {
+  if (typeof window === "undefined") {
+    return DEFAULT_SETTINGS;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (!raw) return DEFAULT_SETTINGS;
+
+    return {
+      ...DEFAULT_SETTINGS,
+      ...JSON.parse(raw),
+    };
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+};
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat("en-IN", {
@@ -581,11 +620,251 @@ function ReportsPage({
   );
 }
 
+function SettingsPage({
+  settings,
+  databaseStatus,
+  reportCounts,
+  onChangeSetting,
+  onClearAllReports,
+  onClearSectionReports,
+}) {
+  return (
+    <div className="settings-page">
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Settings</h1>
+          <p className="page-subtitle">
+            Configure dashboard defaults, export behavior, and saved report handling.
+          </p>
+        </div>
+      </div>
+
+      <div className="settings-grid">
+        <section className="settings-panel">
+          <div className="settings-panel-header">
+            <MonitorCog size={18} strokeWidth={2.2} />
+            <h2>General</h2>
+          </div>
+
+          <div className="settings-field">
+            <label htmlFor="landing-page">Default landing page</label>
+            <select
+              id="landing-page"
+              className="month-select settings-select"
+              value={settings.landingPage}
+              onChange={(event) => onChangeSetting("landingPage", event.target.value)}
+            >
+              <option value="food">Food & Beverage</option>
+              <option value="spa">Spa · Banquet · Other</option>
+              <option value="reports">Reports</option>
+              <option value="settings">Settings</option>
+            </select>
+            <p>Used on the next app load.</p>
+          </div>
+        </section>
+
+        <section className="settings-panel">
+          <div className="settings-panel-header">
+            <CalendarDays size={18} strokeWidth={2.2} />
+            <h2>Reports</h2>
+          </div>
+
+          <div className="settings-field">
+            <label htmlFor="single-interval">Default single-month interval</label>
+            <select
+              id="single-interval"
+              className="month-select settings-select"
+              value={settings.singleMonthInterval}
+              onChange={(event) =>
+                onChangeSetting("singleMonthInterval", Number(event.target.value))
+              }
+            >
+              {SINGLE_MONTH_INTERVAL_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="settings-field">
+            <label htmlFor="multi-interval">Default multi-month interval</label>
+            <select
+              id="multi-interval"
+              className="month-select settings-select"
+              value={settings.multiMonthInterval}
+              onChange={(event) =>
+                onChangeSetting("multiMonthInterval", Number(event.target.value))
+              }
+            >
+              {MULTI_MONTH_INTERVAL_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="settings-field">
+            <label htmlFor="replace-upload">When uploading an existing month</label>
+            <select
+              id="replace-upload"
+              className="month-select settings-select"
+              value={settings.replaceOnUpload}
+              onChange={(event) =>
+                onChangeSetting("replaceOnUpload", event.target.value)
+              }
+            >
+              <option value="replace">Replace automatically</option>
+              <option value="confirm">Ask before replacing</option>
+            </select>
+            <p>Controls whether same-month uploads overwrite saved reports immediately.</p>
+          </div>
+        </section>
+
+        <section className="settings-panel">
+          <div className="settings-panel-header">
+            <Printer size={18} strokeWidth={2.2} />
+            <h2>Export</h2>
+          </div>
+
+          <label className="settings-toggle">
+            <input
+              checked={settings.includeExecutiveSummary}
+              type="checkbox"
+              onChange={(event) =>
+                onChangeSetting("includeExecutiveSummary", event.target.checked)
+              }
+            />
+            <span>
+              <strong>Executive summary</strong>
+              <small>Include the narrative summary in print/PDF exports.</small>
+            </span>
+          </label>
+
+          <label className="settings-toggle">
+            <input
+              checked={settings.includeSourceLabels}
+              type="checkbox"
+              onChange={(event) =>
+                onChangeSetting("includeSourceLabels", event.target.checked)
+              }
+            />
+            <span>
+              <strong>Source labels</strong>
+              <small>Show uploaded filename and report period on dashboard sections.</small>
+            </span>
+          </label>
+
+          <label className="settings-toggle">
+            <input
+              checked={settings.includeExportTimestamp}
+              type="checkbox"
+              onChange={(event) =>
+                onChangeSetting("includeExportTimestamp", event.target.checked)
+              }
+            />
+            <span>
+              <strong>Export timestamp</strong>
+              <small>Include a print timestamp in exported reports.</small>
+            </span>
+          </label>
+        </section>
+
+        <section className="settings-panel">
+          <div className="settings-panel-header">
+            <Database size={18} strokeWidth={2.2} />
+            <h2>Data & Storage</h2>
+          </div>
+
+          <div className="settings-status">
+            <span className="status-label">Backend</span>
+            <p>{databaseStatus}</p>
+          </div>
+
+          <div className="settings-stats">
+            <div>
+              <strong>{reportCounts.food}</strong>
+              <span>F&B reports</span>
+            </div>
+            <div>
+              <strong>{reportCounts.spa}</strong>
+              <span>Spa reports</span>
+            </div>
+            <div>
+              <strong>{reportCounts.total}</strong>
+              <span>Total saved</span>
+            </div>
+          </div>
+
+          <div className="settings-actions">
+            <button
+              className="danger-btn settings-danger"
+              type="button"
+              onClick={() => onClearSectionReports("food")}
+            >
+              <Trash2 size={16} strokeWidth={2.2} />
+              <span>Clear F&B</span>
+            </button>
+
+            <button
+              className="danger-btn settings-danger"
+              type="button"
+              onClick={() => onClearSectionReports("spa")}
+            >
+              <Trash2 size={16} strokeWidth={2.2} />
+              <span>Clear Spa</span>
+            </button>
+
+            <button
+              className="danger-btn settings-danger wide"
+              type="button"
+              onClick={onClearAllReports}
+            >
+              <ShieldAlert size={16} strokeWidth={2.2} />
+              <span>Clear all saved reports</span>
+            </button>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function UnderConstructionPage({ title, punchline, detail }) {
+  return (
+    <div className="construction-page">
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">{title}</h1>
+          <p className="page-subtitle">{detail}</p>
+        </div>
+      </div>
+
+      <section className="construction-panel">
+        <div className="construction-icon">
+          <HardHat size={26} strokeWidth={2.1} />
+        </div>
+        <h2>{punchline}</h2>
+        <p>
+          This module is being prepared to match the upload-driven dashboard flow.
+          Reports, charts, and performance views will land here next.
+        </p>
+      </section>
+    </div>
+  );
+}
+
 function getCard(report, title) {
   return report.cards.find((card) => card.title === title);
 }
 
-function PrintSummary({ report, type }) {
+function PrintSummary({ report, type, includeTimestamp = true }) {
+  const printedAt = new Date().toLocaleString("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+
   if (type === "food") {
     const revenue = getCard(report, "F&B Revenue")?.value;
     const covers = getCard(report, "Total Covers")?.value;
@@ -596,6 +875,9 @@ function PrintSummary({ report, type }) {
     return (
       <section className="print-summary">
         <h2>Executive Summary</h2>
+        {includeTimestamp ? (
+          <span className="print-summary-meta">Exported {printedAt}</span>
+        ) : null}
         <p>
           This Food & Beverage report summarizes uploaded channel revenue,
           covers, average cheque, channel contribution, and day-wise revenue
@@ -613,6 +895,9 @@ function PrintSummary({ report, type }) {
   return (
     <section className="print-summary">
       <h2>Executive Summary</h2>
+      {includeTimestamp ? (
+        <span className="print-summary-meta">Exported {printedAt}</span>
+      ) : null}
       <p>
         This ancillary revenue report summarizes department performance and
         banquet activity from the uploaded file. The highest contributing
@@ -655,11 +940,20 @@ function FoodDashboard({
   report,
   aggregateIntervalDays = 15,
   intervalOptions = [],
+  includeExecutiveSummary = true,
+  includeExportTimestamp = true,
+  includeSourceLabels = true,
   onChangeAggregateInterval,
 }) {
   return (
     <>
-      <PrintSummary report={report} type="food" />
+      {includeExecutiveSummary ? (
+        <PrintSummary
+          report={report}
+          type="food"
+          includeTimestamp={includeExportTimestamp}
+        />
+      ) : null}
 
       <div className="metrics five-cols">
         {report.cards.map((card) => (
@@ -728,7 +1022,7 @@ function FoodDashboard({
       <div className="table-card full-width">
         <div className="card-header">
           <h2>Channel Performance</h2>
-          <span>{report.sourceLabel}</span>
+          {includeSourceLabels ? <span>{report.sourceLabel}</span> : null}
         </div>
 
         <table className="channel-table">
@@ -774,10 +1068,21 @@ function FoodDashboard({
   );
 }
 
-function AncillaryDashboard({ report }) {
+function AncillaryDashboard({
+  report,
+  includeExecutiveSummary = true,
+  includeExportTimestamp = true,
+  includeSourceLabels = true,
+}) {
   return (
     <>
-      <PrintSummary report={report} type="ancillary" />
+      {includeExecutiveSummary ? (
+        <PrintSummary
+          report={report}
+          type="ancillary"
+          includeTimestamp={includeExportTimestamp}
+        />
+      ) : null}
 
       <div className="metrics">
         {report.cards.map((card) => (
@@ -789,7 +1094,7 @@ function AncillaryDashboard({ report }) {
         <div className="chart-card">
           <div className="card-header">
             <h2 className="card-title">Ancillary Revenue by Department</h2>
-            <span>{report.sourceLabel}</span>
+            {includeSourceLabels ? <span>{report.sourceLabel}</span> : null}
           </div>
 
           <RevenueChart data={report.chartData} />
@@ -804,7 +1109,8 @@ function AncillaryDashboard({ report }) {
 }
 
 function App() {
-  const [page, setPage] = useState("food");
+  const [settings, setSettings] = useState(readDashboardSettings);
+  const [page, setPage] = useState(() => readDashboardSettings().landingPage);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [uploads, setUploads] = useState({
     food: [],
@@ -817,7 +1123,15 @@ function App() {
     food: "",
     spa: "",
   });
-  const [aggregateIntervalDays, setAggregateIntervalDays] = useState(15);
+  const [aggregateIntervalDays, setAggregateIntervalDays] = useState(
+    () => readDashboardSettings().singleMonthInterval,
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  }, [settings]);
 
   useEffect(() => {
     let isMounted = true;
@@ -907,6 +1221,23 @@ function App() {
             target === "food"
               ? createFoodReport(rows, file.name, meta.monthLabel)
               : createAncillaryReport(rows, file.name, meta.monthLabel);
+          const existingMonth = (uploads[target] || []).find(
+            (storedReport) => storedReport.monthKey === meta.monthKey,
+          );
+
+          if (
+            existingMonth &&
+            settings.replaceOnUpload === "confirm" &&
+            !window.confirm(
+              `Replace the existing ${meta.monthLabel} report for ${
+                target === "food" ? "Food & Beverage" : "Spa · Banquet · Other"
+              }?`,
+            )
+          ) {
+            failedUploads.push(`${file.name}: skipped replacement`);
+            continue;
+          }
+
           const uploadRecord = {
             ...meta,
             section: target,
@@ -999,8 +1330,58 @@ function App() {
     }
   };
 
+  const handleClearReports = async (section) => {
+    const scopedReports = section
+      ? uploads[section] || []
+      : [...(uploads.food || []), ...(uploads.spa || [])];
+
+    if (!scopedReports.length) {
+      setDatabaseStatus("No saved reports to clear.");
+      return;
+    }
+
+    const label =
+      section === "food"
+        ? "all Food & Beverage reports"
+        : section === "spa"
+          ? "all Spa · Banquet · Other reports"
+          : "all saved reports";
+
+    if (!window.confirm(`Delete ${label}? This cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await Promise.all(
+        scopedReports.map((report) =>
+          deleteStoredReport(report.id || `${report.section}-${report.monthKey}`),
+        ),
+      );
+
+      if (section) {
+        setUploads((current) => ({
+          ...current,
+          [section]: [],
+        }));
+        setSelections((current) => ({
+          ...current,
+          [section]: "",
+        }));
+      } else {
+        setUploads({ food: [], spa: [] });
+        setSelections({ food: "", spa: "" });
+      }
+
+      setDatabaseStatus(`Cleared ${label}.`);
+    } catch (error) {
+      setDatabaseStatus(`Unable to clear reports. ${error.message}`);
+    }
+  };
+
   const isFood = page === "food";
   const isReports = page === "reports";
+  const isSettings = page === "settings";
+  const isConstructionPage = ["dashboard", "rooms", "regions"].includes(page);
   const activeKey = isFood ? "food" : "spa";
   const activeUploads = uploads[activeKey] || [];
   const activeSelection =
@@ -1011,17 +1392,31 @@ function App() {
   const foodIntervalOptions = isFoodAggregateSelection
     ? MULTI_MONTH_INTERVAL_OPTIONS
     : SINGLE_MONTH_INTERVAL_OPTIONS;
+  const reportCounts = {
+    food: uploads.food.length,
+    spa: uploads.spa.length,
+    total: uploads.food.length + uploads.spa.length,
+  };
 
   useEffect(() => {
     if (!isFood) return;
 
+    const fallbackValue = isFoodAggregateSelection
+      ? settings.multiMonthInterval
+      : settings.singleMonthInterval;
     const allowedValues = new Set(foodIntervalOptions.map((option) => option.value));
-    const fallbackValue = foodIntervalOptions[0]?.value;
 
     if (!allowedValues.has(aggregateIntervalDays) && fallbackValue) {
       setAggregateIntervalDays(fallbackValue);
     }
-  }, [isFood, foodIntervalOptions, aggregateIntervalDays]);
+  }, [
+    aggregateIntervalDays,
+    foodIntervalOptions,
+    isFood,
+    isFoodAggregateSelection,
+    settings.multiMonthInterval,
+    settings.singleMonthInterval,
+  ]);
 
   return (
     <div className={`app ${isMobileNavOpen ? "mobile-nav-open" : ""}`}>
@@ -1042,6 +1437,44 @@ function App() {
               databaseStatus={databaseStatus}
               onUpload={handleUpload}
               onDelete={handleDeleteReport}
+            />
+          ) : isSettings ? (
+            <SettingsPage
+              settings={settings}
+              databaseStatus={databaseStatus}
+              reportCounts={reportCounts}
+              onChangeSetting={(key, value) =>
+                setSettings((current) => ({
+                  ...current,
+                  [key]: value,
+                }))
+              }
+              onClearAllReports={() => handleClearReports()}
+              onClearSectionReports={handleClearReports}
+            />
+          ) : isConstructionPage ? (
+            <UnderConstructionPage
+              title={
+                page === "dashboard"
+                  ? "Dashboard"
+                  : page === "rooms"
+                    ? "Rooms & Occupancy"
+                    : "Regions & Sources"
+              }
+              punchline={
+                page === "dashboard"
+                  ? "The front desk is still setting the board."
+                  : page === "rooms"
+                    ? "This wing is being readied for check-in."
+                    : "The map room is still pinning the routes."
+              }
+              detail={
+                page === "dashboard"
+                  ? "A consolidated executive overview will appear here."
+                  : page === "rooms"
+                    ? "Occupancy, ADR, RevPAR, and room mix views will appear here."
+                    : "Geography, source mix, and channel contribution views will appear here."
+              }
             />
           ) : (
             <>
@@ -1110,12 +1543,20 @@ function App() {
                 report={foodReport}
                 aggregateIntervalDays={aggregateIntervalDays}
                 intervalOptions={foodIntervalOptions}
+                includeExecutiveSummary={settings.includeExecutiveSummary}
+                includeExportTimestamp={settings.includeExportTimestamp}
+                includeSourceLabels={settings.includeSourceLabels}
                 onChangeAggregateInterval={setAggregateIntervalDays}
               />
             ) : null}
 
             {!isFood && ancillaryReport ? (
-              <AncillaryDashboard report={ancillaryReport} />
+              <AncillaryDashboard
+                report={ancillaryReport}
+                includeExecutiveSummary={settings.includeExecutiveSummary}
+                includeExportTimestamp={settings.includeExportTimestamp}
+                includeSourceLabels={settings.includeSourceLabels}
+              />
             ) : null}
 
             {isLoadingReports ? <LoadingReportState /> : null}

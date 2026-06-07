@@ -46,14 +46,32 @@ export default function Sidebar({
       <div className="sidebar-nav">
         <div className="sidebar-section">Overview</div>
 
-        <div className="sidebar-item">
+        <div
+          className={`sidebar-item ${
+            selectedPage === "dashboard"
+              ? "active"
+              : ""
+          }`}
+          onClick={() =>
+            changePage("dashboard")
+          }
+        >
           <LayoutDashboard size={18} strokeWidth={2.7} />
           <span>Dashboard</span>
         </div>
 
         <div className="sidebar-section">Departments</div>
 
-        <div className="sidebar-item">
+        <div
+          className={`sidebar-item ${
+            selectedPage === "rooms"
+              ? "active"
+              : ""
+          }`}
+          onClick={() =>
+            changePage("rooms")
+          }
+        >
           <BedDouble size={20} strokeWidth={2.5} />
           <span>Rooms & Occupancy</span>
         </div>
@@ -75,7 +93,16 @@ export default function Sidebar({
           ) : null}
         </div>
 
-        <div className="sidebar-item">
+        <div
+          className={`sidebar-item ${
+            selectedPage === "regions"
+              ? "active"
+              : ""
+          }`}
+          onClick={() =>
+            changePage("regions")
+          }
+        >
           <MapPin size={20} strokeWidth={2.5} />
           <span>Regions & Sources</span>
         </div>
@@ -113,7 +140,16 @@ export default function Sidebar({
           <span>Reports</span>
         </div>
 
-        <div className="sidebar-item">
+        <div
+          className={`sidebar-item ${
+            selectedPage === "settings"
+              ? "active"
+              : ""
+          }`}
+          onClick={() =>
+            changePage("settings")
+          }
+        >
           <Settings size={19} strokeWidth={2.5} />
           <span>Settings</span>
         </div>
