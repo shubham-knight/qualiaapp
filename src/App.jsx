@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { CalendarDays, FileText } from "lucide-react";
 
 import Sidebar from "./components/Sidebar";
 import RevenueCard from "./components/RevenueCard";
@@ -31,6 +32,19 @@ const uploadTargets = [
   },
 ];
 
+const SINGLE_MONTH_INTERVAL_OPTIONS = [
+  { value: 1, label: "Daily" },
+  { value: 2, label: "2-day intervals" },
+  { value: 7, label: "Weekly intervals" },
+  { value: 10, label: "10-day intervals" },
+];
+
+const MULTI_MONTH_INTERVAL_OPTIONS = [
+  { value: 10, label: "10-day intervals" },
+  { value: 15, label: "15-day intervals" },
+  { value: 31, label: "Monthly intervals" },
+];
+
 const formatCurrency = (value) =>
   new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -48,6 +62,145 @@ const formatCompactCurrency = (value) => {
 
 const formatIntervalLabel = (intervalDays) =>
   intervalDays >= 31 ? "monthly intervals" : `${intervalDays}-day intervals`;
+
+const formatTrendRangeLabel = (reports = []) => {
+  if (!reports.length) return "";
+
+  const first = reports[0];
+  const last = reports.at(-1);
+
+  if (!first || !last) return "";
+
+  const firstMonth = (first.monthShort || first.monthLabel || "").split(" ")[0];
+  const lastMonth = (last.monthShort || last.monthLabel || "").split(" ")[0];
+
+  if (first.year === last.year) {
+    return `${firstMonth}-${lastMonth} ${last.year}`;
+  }
+
+  return `${firstMonth} ${first.year}-${lastMonth} ${last.year}`;
+};
+
+const formatPercentDelta = (value) => {
+  const rounded = Math.abs(value) >= 10 ? value.toFixed(0) : value.toFixed(1);
+  const trimmed = rounded.endsWith(".0") ? rounded.slice(0, -2) : rounded;
+  return `${value >= 0 ? "+" : ""}${trimmed}%`;
+};
+
+const calculatePercentDelta = (current, previous) => {
+  if (!Number.isFinite(previous) || previous <= 0) return null;
+  if (!Number.isFinite(current)) return null;
+
+  return ((current - previous) / previous) * 100;
+};
+
+const extractFoodMetrics = (report) => {
+  const revenue = (report?.channelRows || []).reduce(
+    (total, row) => total + (row.revenue || 0),
+    0,
+  );
+  const tables = (report?.channelRows || []).reduce(
+    (total, row) => total + (row.tables || 0),
+    0,
+  );
+  const avgCheque = revenue / (tables || 1);
+
+  return {
+    revenue,
+    tables,
+    avgCheque,
+  };
+};
+
+const buildTrendMeta = (current, previous, label) => {
+  const delta = calculatePercentDelta(current, previous);
+
+  if (delta === null) {
+    return {
+      growth: "No prior month",
+      subtitle: "",
+      trendTone: "muted",
+    };
+  }
+
+  return {
+    growth: formatPercentDelta(delta),
+    subtitle: label,
+    trendTone: delta < 0 ? "negative" : delta > 0 ? "positive" : "muted",
+  };
+};
+
+const applyFoodCardTrends = (report, reports, selection) => {
+  if (!report) return report;
+
+  const selectedReports = getSelectedReports(reports, selection);
+  if (!selectedReports.length) return report;
+
+  const currentMetrics = extractFoodMetrics(report);
+  let comparisonReport;
+  let comparisonLabel;
+
+  if (selectedReports.length === 1) {
+    const currentMonthKey = selectedReports[0].monthKey;
+    comparisonReport = sortReports(reports)
+      .filter((item) => item.monthKey < currentMonthKey)
+      .at(-1);
+    comparisonLabel = comparisonReport
+      ? `vs ${comparisonReport.monthShort || comparisonReport.monthLabel}`
+      : "";
+  } else {
+    comparisonReport = selectedReports[0];
+    comparisonLabel = formatTrendRangeLabel(selectedReports);
+  }
+
+  const comparisonMetrics = comparisonReport
+    ? extractFoodMetrics(comparisonReport.report)
+    : null;
+
+  const revenueTrend = buildTrendMeta(
+    currentMetrics.revenue,
+    comparisonMetrics?.revenue,
+    selectedReports.length === 1 ? comparisonLabel : `trend ${comparisonLabel}`,
+  );
+  const coversTrend = buildTrendMeta(
+    currentMetrics.tables,
+    comparisonMetrics?.tables,
+    selectedReports.length === 1 ? comparisonLabel : `trend ${comparisonLabel}`,
+  );
+  const avgTrend = buildTrendMeta(
+    currentMetrics.avgCheque,
+    comparisonMetrics?.avgCheque,
+    selectedReports.length === 1 ? comparisonLabel : `trend ${comparisonLabel}`,
+  );
+
+  return {
+    ...report,
+    cards: report.cards.map((card) => {
+      if (card.title === "F&B Revenue") {
+        return {
+          ...card,
+          ...revenueTrend,
+        };
+      }
+
+      if (card.title === "Total Covers") {
+        return {
+          ...card,
+          ...coversTrend,
+        };
+      }
+
+      if (card.title === "Avg. Cheque") {
+        return {
+          ...card,
+          ...avgTrend,
+        };
+      }
+
+      return card;
+    }),
+  };
+};
 
 const sortReports = (reports = []) =>
   [...reports].sort((a, b) => a.monthKey.localeCompare(b.monthKey));
@@ -107,6 +260,31 @@ const bucketFoodDailyData = (reports, intervalDays) => {
   return [...bucketMap.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([, row]) => row);
+};
+
+const bucketSingleFoodDailyData = (dailyData, channelRows, intervalDays, periodLabel) => {
+  if (!Array.isArray(dailyData) || !dailyData.length) return [];
+
+  const bucketMap = new Map();
+  const monthToken = (periodLabel || "").split(" ")[0] || "Period";
+
+  dailyData.forEach((row) => {
+    const dayNumber = Number(String(row.day).match(/\d{1,2}/)?.[0] || 1);
+    const bucketStart = Math.floor((dayNumber - 1) / intervalDays) * intervalDays + 1;
+    const bucketEnd = Math.min(bucketStart + intervalDays - 1, 31);
+    const bucketKey = `${bucketStart}-${bucketEnd}`;
+    const bucket = bucketMap.get(bucketKey) || {
+      day: `${monthToken} ${bucketStart}-${bucketEnd}`,
+    };
+
+    channelRows.forEach((channel) => {
+      bucket[channel.key] = (bucket[channel.key] || 0) + (row[channel.key] || 0);
+    });
+
+    bucketMap.set(bucketKey, bucket);
+  });
+
+  return [...bucketMap.values()];
 };
 
 const sumFoodReports = (reports, periodLabel, intervalDays) => {
@@ -237,7 +415,22 @@ const createActiveReport = (reports, selection, type, intervalDays) => {
   const selected = getSelectedReports(reports, selection);
 
   if (!selected.length) return null;
-  if (selected.length === 1) return selected[0].report;
+  if (selected.length === 1) {
+    const baseReport = selected[0].report;
+
+    if (type !== "food") return baseReport;
+
+    return {
+      ...baseReport,
+      dailyData: bucketSingleFoodDailyData(
+        baseReport.dailyData,
+        baseReport.channelRows,
+        intervalDays,
+        baseReport.periodLabel,
+      ),
+      sourceLabel: `${baseReport.sourceLabel} · ${formatIntervalLabel(intervalDays)}`,
+    };
+  }
 
   const periodLabel = getSelectionLabel(reports, selection);
   return type === "food"
@@ -448,7 +641,12 @@ function EmptyReportState({ title, onOpenReports }) {
   );
 }
 
-function FoodDashboard({ report }) {
+function FoodDashboard({
+  report,
+  aggregateIntervalDays = 15,
+  intervalOptions = [],
+  onChangeAggregateInterval,
+}) {
   return (
     <>
       <PrintSummary report={report} type="food" />
@@ -463,6 +661,24 @@ function FoodDashboard({ report }) {
         <div className="chart-card">
           <div className="card-header">
             <h2>Daily F&B Revenue by Channel</h2>
+
+            {report?.dailyData?.length ? (
+              <div className="card-tools">
+                <select
+                  className="month-select chart-interval-select"
+                  value={aggregateIntervalDays}
+                  onChange={(event) =>
+                    onChangeAggregateInterval?.(Number(event.target.value))
+                  }
+                >
+                  {intervalOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
           </div>
 
           <RevenueChart data={report.dailyData} />
@@ -625,12 +841,14 @@ function App() {
   }, []);
 
   const foodReport = useMemo(() => {
-    return createActiveReport(
+    const report = createActiveReport(
       uploads.food,
       selections.food,
       "food",
       aggregateIntervalDays,
     );
+
+    return applyFoodCardTrends(report, uploads.food, selections.food);
   }, [uploads.food, selections.food, aggregateIntervalDays]);
 
   const ancillaryReport = useMemo(() => {
@@ -771,9 +989,22 @@ function App() {
   const activeSelection =
     selections[activeKey] || sortReports(activeUploads).at(-1)?.monthKey || "";
   const activePeriodLabel = activeReport?.periodLabel || "No report selected";
-  const isAggregateFoodView =
-    isFood && activeSelection.startsWith("last-") && Boolean(foodReport);
   const pageViewKey = isReports ? "reports" : page;
+  const isFoodAggregateSelection = isFood && activeSelection.startsWith("last-");
+  const foodIntervalOptions = isFoodAggregateSelection
+    ? MULTI_MONTH_INTERVAL_OPTIONS
+    : SINGLE_MONTH_INTERVAL_OPTIONS;
+
+  useEffect(() => {
+    if (!isFood) return;
+
+    const allowedValues = new Set(foodIntervalOptions.map((option) => option.value));
+    const fallbackValue = foodIntervalOptions[0]?.value;
+
+    if (!allowedValues.has(aggregateIntervalDays) && fallbackValue) {
+      setAggregateIntervalDays(fallbackValue);
+    }
+  }, [isFood, foodIntervalOptions, aggregateIntervalDays]);
 
   return (
     <div className={`app ${isSidebarOpen ? "sidebar-open" : ""}`}>
@@ -858,35 +1089,30 @@ function App() {
                     ) : null}
                   </select>
 
-                  {isAggregateFoodView ? (
-                    <select
-                      className="month-select"
-                      value={aggregateIntervalDays}
-                      onChange={(event) =>
-                        setAggregateIntervalDays(Number(event.target.value))
-                      }
-                    >
-                      <option value={10}>10-day intervals</option>
-                      <option value={15}>15-day intervals</option>
-                      <option value={31}>Monthly intervals</option>
-                    </select>
-                  ) : null}
+                <button className="date-btn">
+                  <CalendarDays size={16} strokeWidth={2.2} />
+                  <span>{activePeriodLabel}</span>
+                </button>
 
-                  <button className="date-btn">{activePeriodLabel}</button>
-
-                  <button
-                    className="export-btn"
-                    disabled={!canExport}
-                    onClick={handleExport}
-                  >
-                    Export PDF
-                  </button>
-                </div>
+                <button
+                  className="export-btn"
+                  disabled={!canExport}
+                  onClick={handleExport}
+                >
+                  <FileText size={16} strokeWidth={2.2} />
+                  <span>Export PDF</span>
+                </button>
               </div>
+            </div>
 
-              {isFood && foodReport ? (
-                <FoodDashboard report={foodReport} />
-              ) : null}
+            {isFood && foodReport ? (
+              <FoodDashboard
+                report={foodReport}
+                aggregateIntervalDays={aggregateIntervalDays}
+                intervalOptions={foodIntervalOptions}
+                onChangeAggregateInterval={setAggregateIntervalDays}
+              />
+            ) : null}
 
               {!isFood && ancillaryReport ? (
                 <AncillaryDashboard report={ancillaryReport} />

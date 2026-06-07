@@ -639,6 +639,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   min-height: 40px;
   height: 40px;
   border-radius: 8px;
@@ -675,10 +676,25 @@
   text-overflow: ellipsis;
   color: #49443b;
   font-weight: 650;
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 .export-btn {
   text-align: center;
+}
+
+.date-btn svg,
+.export-btn svg {
+  flex: 0 0 auto;
+}
+
+.chart-interval-select {
+  min-width: 170px;
 }
 
 .metrics {
@@ -696,6 +712,7 @@
   position: relative;
   isolation: isolate;
   border-radius: 14px;
+  overflow: hidden;
   transition:
     transform 180ms ease,
     box-shadow 180ms ease,
@@ -706,11 +723,11 @@
 .metric-card::before {
   content: "";
   position: absolute;
-  top: 12px;
-  bottom: 12px;
+  top: 0;
+  bottom: 0;
   left: 0;
   width: 0;
-  border-radius: 14px;
+  border-radius: 14px 0 0 14px;
   background: linear-gradient(180deg, #d4b158, #ba983d);
   opacity: 0;
   transition:
@@ -729,11 +746,34 @@
   line-height: 1;
 }
 
+.metric-value.compact {
+  font-size: 26px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .metric-growth {
   min-height: 20px;
   margin-top: 10px;
   font-size: 13px;
   line-height: 1.35;
+  color: var(--green);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metric-growth.positive {
+  color: var(--green);
+}
+
+.metric-growth.negative {
+  color: #b34b3c;
+}
+
+.metric-growth.muted {
+  color: var(--muted);
 }
 
 .food-grid,
@@ -767,6 +807,13 @@
   gap: 14px;
   align-items: flex-start;
   min-width: 0;
+}
+
+.card-tools {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
 }
 
 .card-header h2,
@@ -1236,6 +1283,10 @@
     text-align: left;
   }
 
+  .card-tools {
+    margin-top: 12px;
+  }
+
   .channel-filters {
     justify-content: flex-start;
     margin-top: 12px;
@@ -1361,6 +1412,16 @@
     padding: 14px;
   }
 
+  .chart-card,
+  .donut-card {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: calc(100vh - 32mm);
+    page-break-before: always;
+    break-before: page;
+  }
+
   .card-header {
     margin-bottom: 8px;
   }
@@ -1373,21 +1434,24 @@
     margin: 0 0 8px;
   }
 
-  .recharts-responsive-container {
-    height: 260px !important;
+  .chart-card .recharts-responsive-container,
+  .donut-card .recharts-responsive-container {
+    flex: 1 1 auto;
+    height: 100% !important;
+    min-height: 0;
   }
 
   .donut-card {
     overflow: hidden;
   }
 
-  .donut-card {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    min-height: calc(100vh - 32mm);
-    page-break-before: always;
-    break-before: page;
+  .chart-card {
+    overflow: hidden;
+  }
+
+  .chart-card .recharts-responsive-container {
+    width: 100% !important;
+    min-height: calc(100vh - 95mm);
   }
 
   .donut-chart-wrap {
